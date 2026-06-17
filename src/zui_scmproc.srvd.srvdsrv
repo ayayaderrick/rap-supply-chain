@@ -1,0 +1,11 @@
+@EndUserText: {
+  label: 'Service Definition for ZC_SCMPROC'
+}
+@ObjectModel: {
+  leadingEntity: {
+    name: 'ZC_SCMPROC'
+  }
+}
+define service ZUI_SCMPROC provider contracts odata_v4_ui {
+  expose ZC_SCMPROC as Procurement;
+}

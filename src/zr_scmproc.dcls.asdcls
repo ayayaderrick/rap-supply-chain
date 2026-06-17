@@ -1,0 +1,6 @@
+@EndUserText.label: 'ZR_SCMPROC'
+@MappingRole: true
+define role ZR_SCMPROC {
+  grant select on ZR_SCMPROC
+  where TRUE;
+}

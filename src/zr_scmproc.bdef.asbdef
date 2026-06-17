@@ -1,0 +1,59 @@
+managed implementation in class ZBP_R_SCMPROC unique;
+strict ( 2 );
+with draft;
+extensible;
+define behavior for ZR_SCMPROC alias Procurement
+persistent table ZSCM_A_PROC
+extensible
+draft table ZSCM_D_PROC
+etag master LocalLastChangedAt
+lock master total etag LastChangedAt
+authorization master( global )
+{
+  field ( readonly )
+   ProcurementUUID,
+   RateFetchTimestamp,
+   CreatedBy,
+   CreatedAt,
+   LocalLastChangedBy,
+   LocalLastChangedAt,
+   LastChangedAt;
+
+  field ( numbering : managed )
+   ProcurementUUID;
+
+
+  create;
+  update;
+  delete;
+
+  draft action Activate optimized;
+  draft action Discard;
+  draft action Edit;
+  draft action Resume;
+  draft determine action Prepare;
+
+  mapping for ZSCM_A_PROC corresponding extensible
+  {
+    ProcurementUUID = PROCUREMENT_UUID;
+    ProcurementID = PROCUREMENT_ID;
+    MaterialName = MATERIAL_NAME;
+    Supplier = SUPPLIER;
+    Quantity = QUANTITY;
+    UnitOfMeasure = UNIT_OF_MEASURE;
+    UnitPrice = UNIT_PRICE;
+    SourceCurrency = SOURCE_CURRENCY;
+    PreferredCurrency = PREFERRED_CURRENCY;
+    ExchangeRate = EXCHANGE_RATE;
+    TotalInPreferredCcy = TOTAL_IN_PREFERRED_CCY;
+    RateFetchTimestamp = RATE_FETCH_TIMESTAMP;
+    ApiMessage = API_MESSAGE;
+    OverallStatus = OVERALL_STATUS;
+    CreatedBy = CREATED_BY;
+    CreatedAt = CREATED_AT;
+    LocalLastChangedBy = LOCAL_LAST_CHANGED_BY;
+    LocalLastChangedAt = LOCAL_LAST_CHANGED_AT;
+    LastChangedAt = LAST_CHANGED_AT;
+  }
+
+}

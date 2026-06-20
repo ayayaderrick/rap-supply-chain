@@ -1,193 +1,74 @@
 @Metadata.layer: #CORE
 @UI.headerInfo.title.type: #STANDARD
-@UI.headerInfo.title.value: 'ProcurementUUID'
+@UI.headerInfo.title.value: 'ProcurementID'
 @UI.headerInfo.description.type: #STANDARD
-@UI.headerInfo.description.value: 'ProcurementUUID'
+@UI.headerInfo.description.value: 'MaterialName'
 annotate view ZC_SCMPROC with
 {
-  @EndUserText.label: 'ProcurementUUID'
-  @UI.facet: [ {
-    label: 'General Information', 
-    id: 'GeneralInfo', 
-    purpose: #STANDARD, 
-    position: 10 , 
-    type: #IDENTIFICATION_REFERENCE
-  } ]
-  @UI.identification: [ {
-    position: 10 , 
-    label: 'ProcurementUUID'
-  } ]
-  @UI.lineItem: [ {
-    position: 10 , 
-    label: 'ProcurementUUID'
-  } ]
-  @UI.selectionField: [ {
-    position: 10 
-  } ]
-  ProcurementUUID;
-  
-  @UI.identification: [ {
-    position: 20 
-  } ]
-  @UI.lineItem: [ {
-    position: 20 
-  } ]
-  @UI.selectionField: [ {
-    position: 20 
-  } ]
+  @UI.facet: [ 
+    { id:              'ProcurementDetails',
+      type:            #FIELDGROUP_REFERENCE,
+      targetQualifier: 'ProcurementDetailsGroup',
+      label:           'Order Details',
+      position:        10 },
+    { id:              'ExchangeRateInfo',
+      type:            #FIELDGROUP_REFERENCE,
+      targetQualifier: 'ExchangeRateInfoGroup',
+      label:           'Exchange Rate & Totals',
+      position:        20 }
+   ]
+   
+ @UI.lineItem: [
+//    { position: 5, type: #FOR_ACTION, dataAction: 'Approve',     label: 'Approve Order',  emphasized: true  },
+//    { position: 8, type: #FOR_ACTION, dataAction: 'RefreshRate', label: 'Refresh Rate' },
+    { position: 10, importance: #HIGH }
+  ]
+  @UI.identification: [
+//    { position: 5,  type: #FOR_ACTION, dataAction: 'Approve',     label: 'Approve Order',  emphasized: true },
+//    { position: 8,  type: #FOR_ACTION, dataAction: 'RefreshRate', label: 'Refresh Rate' },
+      { position: 10 }  
+  ]
+  @UI.selectionField: [ { position: 10 } ]
   ProcurementID;
   
-  @UI.identification: [ {
-    position: 30 
-  } ]
-  @UI.lineItem: [ {
-    position: 30 
-  } ]
-  @UI.selectionField: [ {
-    position: 30 
-  } ]
+  @UI.lineItem:       [ { position: 20, importance: #HIGH } ]
+  @UI.fieldGroup:     [ { position: 10, qualifier: 'ProcurementDetailsGroup' } ]
+  @UI.selectionField: [ { position: 20 } ]
   MaterialName;
   
-  @UI.identification: [ {
-    position: 40 
-  } ]
-  @UI.lineItem: [ {
-    position: 40 
-  } ]
-  @UI.selectionField: [ {
-    position: 40 
-  } ]
+  @UI.lineItem:       [ { position: 30, importance: #MEDIUM } ]
+  @UI.fieldGroup:     [ { position: 20, qualifier: 'ProcurementDetailsGroup' } ]
   Supplier;
   
-  @UI.identification: [ {
-    position: 50 
-  } ]
-  @UI.lineItem: [ {
-    position: 50 
-  } ]
-  @UI.selectionField: [ {
-    position: 50 
-  } ]
+  @UI.lineItem:       [ { position: 40, importance: #HIGH } ]
+  @UI.fieldGroup:     [ { position: 30, qualifier: 'ProcurementDetailsGroup' } ]
   Quantity;
   
-  @UI.identification: [ {
-    position: 60 
-  } ]
-  @UI.lineItem: [ {
-    position: 60 
-  } ]
-  @UI.selectionField: [ {
-    position: 60 
-  } ]
+  @UI.lineItem:       [ { position: 50, importance: #HIGH } ]
+  @UI.fieldGroup:     [ { position: 40, qualifier: 'ProcurementDetailsGroup' } ]
   UnitPrice;
   
-  @UI.identification: [ {
-    position: 70 
-  } ]
-  @UI.lineItem: [ {
-    position: 70 
-  } ]
-  @UI.selectionField: [ {
-    position: 70 
-  } ]
+//   ── Exchange Rate & Totals facet ────────────────────────────────────────
+  @UI.lineItem:       [ { position: 60, importance: #HIGH } ]
+  @UI.fieldGroup:     [ { position: 10, qualifier: 'ExchangeRateInfoGroup' } ]
   ExchangeRate;
   
-  @UI.identification: [ {
-    position: 80 
-  } ]
-  @UI.lineItem: [ {
-    position: 80 
-  } ]
-  @UI.selectionField: [ {
-    position: 80 
-  } ]
+  @UI.lineItem:       [ { position: 70, importance: #HIGH } ]
+  @UI.fieldGroup:     [ { position: 20, qualifier: 'ExchangeRateInfoGroup' } ]
   TotalInPreferredCcy;
   
-  @UI.identification: [ {
-    position: 90 
-  } ]
-  @UI.lineItem: [ {
-    position: 90 
-  } ]
-  @UI.selectionField: [ {
-    position: 90 
-  } ]
+  @UI.fieldGroup:     [ { position: 30, qualifier: 'ExchangeRateInfoGroup' } ]
   RateFetchTimestamp;
   
-  @UI.identification: [ {
-    position: 100 
-  } ]
-  @UI.lineItem: [ {
-    position: 100 
-  } ]
-  @UI.selectionField: [ {
-    position: 100 
-  } ]
+  @UI.fieldGroup:     [ { position: 40, qualifier: 'ExchangeRateInfoGroup' } ]
+  @UI.multiLineText: true
   ApiMessage;
   
-  @UI.identification: [ {
-    position: 110 
-  } ]
-  @UI.lineItem: [ {
-    position: 110 
-  } ]
-  @UI.selectionField: [ {
-    position: 110 
-  } ]
+
+  @UI.lineItem: [ {  position: 80, importance: #HIGH } ]
+  @UI.fieldGroup:     [ { position: 50, qualifier: 'ProcurementDetailsGroup' } ]
+  @UI.textArrangement: #TEXT_ONLY
   OverallStatus;
   
-  @UI.identification: [ {
-    position: 120 
-  } ]
-  @UI.lineItem: [ {
-    position: 120 
-  } ]
-  @UI.selectionField: [ {
-    position: 120 
-  } ]
-  CreatedBy;
   
-  @UI.identification: [ {
-    position: 130 
-  } ]
-  @UI.lineItem: [ {
-    position: 130 
-  } ]
-  @UI.selectionField: [ {
-    position: 130 
-  } ]
-  CreatedAt;
-  
-  @UI.identification: [ {
-    position: 140 
-  } ]
-  @UI.lineItem: [ {
-    position: 140 
-  } ]
-  @UI.selectionField: [ {
-    position: 140 
-  } ]
-  LocalLastChangedBy;
-  
-  @UI.identification: [ {
-    position: 150 
-  } ]
-  @UI.lineItem: [ {
-    position: 150 
-  } ]
-  @UI.selectionField: [ {
-    position: 150 
-  } ]
-  LocalLastChangedAt;
-  
-  @UI.identification: [ {
-    position: 160 
-  } ]
-  @UI.lineItem: [ {
-    position: 160 
-  } ]
-  @UI.selectionField: [ {
-    position: 160 
-  } ]
-  LastChangedAt;
 }

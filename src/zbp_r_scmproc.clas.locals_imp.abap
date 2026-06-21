@@ -36,7 +36,7 @@ CLASS lhc_zr_scmproc IMPLEMENTATION.
         cl_numberrange_runtime=>number_get(
           EXPORTING
             nr_range_nr       = '01'
-            object            = 'ZCSM_PRNR'
+            object            = 'ZSCM_PRNR'
             quantity          = CONV #( lv_quantity )
           IMPORTING
             number            = DATA(lv_returned_number)

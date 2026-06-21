@@ -3,24 +3,27 @@ strict ( 2 );
 with draft;
 extensible;
 define behavior for ZR_SCMPROC alias Procurement
-persistent table ZSCM_A_PROC
+persistent table zscm_a_proc
 extensible
-draft table ZSCM_D_PROC
+draft table zscm_d_proc
 etag master LocalLastChangedAt
 lock master total etag LastChangedAt
-authorization master( global )
+authorization master ( global )
 {
   field ( readonly )
-   ProcurementUUID,
-   RateFetchTimestamp,
-   CreatedBy,
-   CreatedAt,
-   LocalLastChangedBy,
-   LocalLastChangedAt,
-   LastChangedAt;
+  ProcurementUUID,
+  CreatedBy,
+  CreatedAt,
+  LocalLastChangedBy,
+  LocalLastChangedAt,
+  LastChangedAt;
+
+  field ( readonly ) ExchangeRate, TotalInPreferredCcy, RateFetchTimestamp, OverallStatus, ApiMessage;
+
+  field ( mandatory ) MaterialName, SourceCurrency, PreferredCurrency;
 
   field ( numbering : managed )
-   ProcurementUUID;
+  ProcurementUUID;
 
 
   create;
@@ -33,27 +36,29 @@ authorization master( global )
   draft action Resume;
   draft determine action Prepare;
 
-  mapping for ZSCM_A_PROC corresponding extensible
-  {
-    ProcurementUUID = PROCUREMENT_UUID;
-    ProcurementID = PROCUREMENT_ID;
-    MaterialName = MATERIAL_NAME;
-    Supplier = SUPPLIER;
-    Quantity = QUANTITY;
-    UnitOfMeasure = UNIT_OF_MEASURE;
-    UnitPrice = UNIT_PRICE;
-    SourceCurrency = SOURCE_CURRENCY;
-    PreferredCurrency = PREFERRED_CURRENCY;
-    ExchangeRate = EXCHANGE_RATE;
-    TotalInPreferredCcy = TOTAL_IN_PREFERRED_CCY;
-    RateFetchTimestamp = RATE_FETCH_TIMESTAMP;
-    ApiMessage = API_MESSAGE;
-    OverallStatus = OVERALL_STATUS;
-    CreatedBy = CREATED_BY;
-    CreatedAt = CREATED_AT;
-    LocalLastChangedBy = LOCAL_LAST_CHANGED_BY;
-    LocalLastChangedAt = LOCAL_LAST_CHANGED_AT;
-    LastChangedAt = LAST_CHANGED_AT;
-  }
+  determination setProcurementId on modify { create; }
+
+  mapping for zscm_a_proc corresponding extensible
+    {
+      ProcurementUUID     = PROCUREMENT_UUID;
+      ProcurementID       = PROCUREMENT_ID;
+      MaterialName        = MATERIAL_NAME;
+      Supplier            = SUPPLIER;
+      Quantity            = QUANTITY;
+      UnitOfMeasure       = UNIT_OF_MEASURE;
+      UnitPrice           = UNIT_PRICE;
+      SourceCurrency      = SOURCE_CURRENCY;
+      PreferredCurrency   = PREFERRED_CURRENCY;
+      ExchangeRate        = EXCHANGE_RATE;
+      TotalInPreferredCcy = TOTAL_IN_PREFERRED_CCY;
+      RateFetchTimestamp  = RATE_FETCH_TIMESTAMP;
+      ApiMessage          = API_MESSAGE;
+      OverallStatus       = OVERALL_STATUS;
+      CreatedBy           = CREATED_BY;
+      CreatedAt           = CREATED_AT;
+      LocalLastChangedBy  = LOCAL_LAST_CHANGED_BY;
+      LocalLastChangedAt  = LOCAL_LAST_CHANGED_AT;
+      LastChangedAt       = LAST_CHANGED_AT;
+    }
 
 }

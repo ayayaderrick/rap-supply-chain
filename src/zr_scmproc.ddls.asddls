@@ -3,7 +3,7 @@
 @ObjectModel.sapObjectNodeType.name: 'ZSCM_A_PROC'
 @EndUserText.label: '###GENERATED Core Data Service Entity'
 define root view entity ZR_SCMPROC
-  as select from ZSCM_A_PROC as Procurement
+  as select from zscm_a_proc as Procurement
 {
   key procurement_uuid as ProcurementUUID,
   procurement_id as ProcurementID,

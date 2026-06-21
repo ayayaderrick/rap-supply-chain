@@ -1,82 +1,91 @@
 @Metadata.allowExtensions: true
 @Metadata.ignorePropagatedAnnotations: true
-@Endusertext: {
-  Label: '###GENERATED Core Data Service Entity'
+@EndUserText: {
+  label: 'Procurement Orders'
 }
-@Objectmodel: {
-  Sapobjectnodetype.Name: 'ZSCM_A_PROC'
+@ObjectModel: {
+  sapObjectNodeType.name: 'ZSCM_A_PROC'
 }
 @AccessControl.authorizationCheck: #MANDATORY
+@UI.headerInfo: { typeName: 'Order',
+                  typeNamePlural: 'Orders' }
+@Search.searchable: true
 define root view entity ZC_SCMPROC
-  provider contract TRANSACTIONAL_QUERY
+  provider contract transactional_query
   as projection on ZR_SCMPROC
-  association [1..1] to ZR_SCMPROC as _BaseEntity on $projection.PROCUREMENTUUID = _BaseEntity.PROCUREMENTUUID
+  association [1..1] to ZR_SCMPROC as _BaseEntity on $projection.ProcurementUUID = _BaseEntity.ProcurementUUID
 {
   key ProcurementUUID,
+  @Search.defaultSearchElement: true
+  @Search.fuzzinessThreshold: 0.8
   ProcurementID,
+  @Search.defaultSearchElement: true
+  @Search.fuzzinessThreshold: 0.8
   MaterialName,
+  @Search.defaultSearchElement: true
+  @Search.fuzzinessThreshold: 0.8
   Supplier,
   @Semantics: {
-    Quantity.Unitofmeasure: 'UnitOfMeasure'
+    quantity.unitOfMeasure: 'UnitOfMeasure'
   }
   Quantity,
   @Consumption: {
-    Valuehelpdefinition: [ {
-      Entity.Element: 'UnitOfMeasure', 
-      Entity.Name: 'I_UnitOfMeasureStdVH', 
-      Useforvalidation: true
+    valueHelpDefinition: [ {
+      entity.element: 'UnitOfMeasure', 
+      entity.name: 'I_UnitOfMeasureStdVH', 
+      useForValidation: true
     } ]
   }
   UnitOfMeasure,
   @Semantics: {
-    Amount.Currencycode: 'SourceCurrency'
+    amount.currencyCode: 'SourceCurrency'
   }
   UnitPrice,
   @Consumption: {
-    Valuehelpdefinition: [ {
-      Entity.Element: 'Currency', 
-      Entity.Name: 'I_CurrencyStdVH', 
-      Useforvalidation: true
+    valueHelpDefinition: [ {
+      entity.element: 'Currency', 
+      entity.name: 'I_CurrencyStdVH', 
+      useForValidation: true
     } ]
   }
   SourceCurrency,
   @Consumption: {
-    Valuehelpdefinition: [ {
-      Entity.Element: 'Currency', 
-      Entity.Name: 'I_CurrencyStdVH', 
-      Useforvalidation: true
+    valueHelpDefinition: [ {
+      entity.element: 'Currency', 
+      entity.name: 'I_CurrencyStdVH', 
+      useForValidation: true
     } ]
   }
   PreferredCurrency,
   ExchangeRate,
   @Semantics: {
-    Amount.Currencycode: 'PreferredCurrency'
+    amount.currencyCode: 'PreferredCurrency'
   }
   TotalInPreferredCcy,
   @Semantics: {
-    Systemdatetime.Createdat: true
+    systemDateTime.createdAt: true
   }
   RateFetchTimestamp,
   ApiMessage,
   OverallStatus,
   @Semantics: {
-    User.Createdby: true
+    user.createdBy: true
   }
   CreatedBy,
   @Semantics: {
-    Systemdatetime.Createdat: true
+    systemDateTime.createdAt: true
   }
   CreatedAt,
   @Semantics: {
-    User.Localinstancelastchangedby: true
+    user.localInstanceLastChangedBy: true
   }
   LocalLastChangedBy,
   @Semantics: {
-    Systemdatetime.Localinstancelastchangedat: true
+    systemDateTime.localInstanceLastChangedAt: true
   }
   LocalLastChangedAt,
   @Semantics: {
-    Systemdatetime.Lastchangedat: true
+    systemDateTime.lastChangedAt: true
   }
   LastChangedAt,
   _BaseEntity

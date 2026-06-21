@@ -18,9 +18,9 @@ authorization master ( global )
   LocalLastChangedAt,
   LastChangedAt;
 
-  field ( readonly ) ExchangeRate, TotalInPreferredCcy, RateFetchTimestamp, OverallStatus, ApiMessage;
+  field ( readonly ) ExchangeRate, TotalInPreferredCcy, RateFetchTimestamp, OverallStatus, ApiMessage, ProcurementId;
 
-  field ( mandatory ) MaterialName, SourceCurrency, PreferredCurrency;
+  field ( mandatory ) MaterialName, UnitPrice, Quantity;
 
   field ( numbering : managed )
   ProcurementUUID;

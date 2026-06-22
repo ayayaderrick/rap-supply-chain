@@ -153,8 +153,15 @@ CLASS lhc_zr_scmproc IMPLEMENTATION.
 
   ENDMETHOD.
 
+  "────────────────────────────────────────────────────────────────────────────
+  " Helper: lazy-init the API client.
+  " Unit tests set api_client to a test double before calling behavior methods.
+  "────────────────────────────────────────────────────────────────────────────
   METHOD get_api_client.
-
+    IF api_client IS INITIAL.
+      api_client = zcl_scm_exch_rate_api=>create(  ).
+    ENDIF.
+    result = api_client.
   ENDMETHOD.
 
 ENDCLASS.

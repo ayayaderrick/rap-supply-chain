@@ -7,8 +7,8 @@
   sapObjectNodeType.name: 'ZSCM_A_PROC'
 }
 @AccessControl.authorizationCheck: #MANDATORY
-@UI.headerInfo: { typeName: 'Order',
-                  typeNamePlural: 'Orders' }
+@UI.headerInfo: { typeName: 'Procurement Order',
+                  typeNamePlural: 'Procurement Orders' }
 @Search.searchable: true
 define root view entity ZC_SCMPROC
   provider contract transactional_query

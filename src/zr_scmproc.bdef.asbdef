@@ -37,8 +37,17 @@ authorization master ( global )
   draft determine action Prepare;
 
   determination setProcurementId on modify { create; }
-  determination determineExchangeRateTotal on modify {field UnitPrice; field Quantity;
-                                                      field SourceCurrency; field PreferredCurrency;}
+  determination determineExchangeRateTotal on modify
+  { field UnitPrice; field Quantity;
+    field SourceCurrency; field PreferredCurrency; }
+
+  side effects
+  {
+    field UnitPrice affects field TotalInPreferredCcy, field ExchangeRate, field ApiMessage, field RateFetchTimestamp;
+    field Quantity affects field TotalInPreferredCcy;
+    field SourceCurrency affects field TotalInPreferredCcy, field ExchangeRate, field ApiMessage, field RateFetchTimestamp;
+    field PreferredCurrency affects field TotalInPreferredCcy, field ExchangeRate, field ApiMessage, field RateFetchTimestamp;
+  }
 
   mapping for zscm_a_proc corresponding extensible
     {

@@ -90,7 +90,7 @@ CLASS zcl_scm_exch_rate_api IMPLEMENTATION.
     DATA(rates_section) = substring( val = json_body off = rates_block_pos ).
 
     " Search for "TARGET": or "TARGET": (pretty-printed variant)
-    DATA(search_key) = |"{ target_currency }"|.
+    DATA(search_key) = |"{ target_currency }":|.
     DATA(key_pos) = find( val = rates_section sub = search_key ).
     IF key_pos < 0.
       search_key = |"{ target_currency }": |.

@@ -34,14 +34,15 @@ authorization master ( global )
   draft action Discard;
   draft action Edit;
   draft action Resume;
-  draft determine action Prepare;
+  draft determine action Prepare { validation validateCurrencies; validation validateQuantityAndPrice; }
 
   determination setProcurementId on modify { create; }
   determination determineExchangeRateTotal on modify
   { field UnitPrice; field Quantity;
     field SourceCurrency; field PreferredCurrency; }
 
-  validation validateCurrencies on save {create; field SourceCurrency; field PreferredCurrency;}
+  validation validateCurrencies on save { create; field SourceCurrency; field PreferredCurrency; }
+  validation validateQuantityAndPrice on save { create; field Quantity; field UnitPrice; }
 
   side effects
   {

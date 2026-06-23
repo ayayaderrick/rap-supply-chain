@@ -10,7 +10,9 @@ CLASS lhc_zr_scmproc DEFINITION INHERITING FROM cl_abap_behavior_handler.
       determineExchangeRateTotal FOR DETERMINE ON MODIFY
         IMPORTING keys FOR Procurement~determineExchangeRateTotal,
       validateCurrencies FOR VALIDATE ON SAVE
-        IMPORTING keys FOR Procurement~validateCurrencies.
+        IMPORTING keys FOR Procurement~validateCurrencies,
+      validateQuantityAndPrice FOR VALIDATE ON SAVE
+        IMPORTING keys FOR Procurement~validateQuantityAndPrice.
 
     " ── Helpers ────────────────────────────────────────────────────────────
     " Lazy-initialised so the unit test can inject a double before first use.
@@ -179,8 +181,6 @@ CLASS lhc_zr_scmproc IMPLEMENTATION.
     RESULT DATA(procurements)
     FAILED DATA(failed_read).
 
-    CONSTANTS status_invalid TYPE abap_bool VALUE abap_true.
-
     LOOP AT procurements INTO DATA(procurement).
       " Invalidate state messages
       APPEND VALUE #(
@@ -230,6 +230,57 @@ CLASS lhc_zr_scmproc IMPLEMENTATION.
          ) TO reported-procurement.
       ENDIF.
     ENDLOOP.
+
+  ENDMETHOD.
+
+  "────────────────────────────────────────────────────────────────────────────
+  " Validation: quantity and unit price must be positive.
+  "────────────────────────────────────────────────────────────────────────────
+  METHOD validateQuantityAndPrice.
+
+    READ ENTITIES OF zr_scmproc IN LOCAL MODE
+    ENTITY Procurement
+    FIELDS ( Quantity UnitPrice )
+    WITH CORRESPONDING #( keys )
+    RESULT DATA(lt_procurement)
+    FAILED DATA(lt_failed).
+
+    failed = CORRESPONDING #( DEEP lt_failed ).
+
+    LOOP AT lt_procurement INTO DATA(ls_procurement).
+      " Invalidate state messages
+      APPEND VALUE #(
+          %tky = ls_procurement-%tky
+          %state_area = 'VALIDATE_QTY_PRICE'
+       ) TO reported-procurement.
+
+      IF ls_procurement-Quantity <= 0.
+        APPEND VALUE #( %tky = ls_procurement-%tky ) TO failed-procurement.
+        APPEND VALUE #(
+            %tky = ls_procurement-%tky
+            %msg = new_message_with_text(
+                severity = if_abap_behv_message=>severity-error
+                text = 'Quantity must be greater than zero.'
+             )
+            %element-Quantity = if_abap_behv=>mk-on
+            %state_area = 'VALIDATE_QTY_PRICE'
+         ) TO reported-procurement.
+      ENDIF.
+
+      IF ls_procurement-UnitPrice <= 0.
+        APPEND VALUE #( %tky = ls_procurement-%tky ) TO failed-procurement.
+        APPEND VALUE #(
+            %tky = ls_procurement-%tky
+            %msg = new_message_with_text(
+                severity = if_abap_behv_message=>severity-error
+                text = 'Unit price must be greater than zero.'
+             )
+            %element-UnitPrice = if_abap_behv=>mk-on
+            %state_area = 'VALIDATE_QTY_PRICE'
+         ) TO reported-procurement.
+      ENDIF.
+    ENDLOOP.
+
 
   ENDMETHOD.
 

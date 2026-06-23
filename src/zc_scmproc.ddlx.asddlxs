@@ -48,16 +48,20 @@ annotate view ZC_SCMPROC with
   @UI.fieldGroup:     [ { position: 40, qualifier: 'ProcurementDetailsGroup' } ]
   UnitPrice;
   
+  @UI.lineItem:       [ { position: 60, importance: #MEDIUM, label: 'Preferred Currency' } ]
+  @UI.fieldGroup:     [ { position: 50, qualifier: 'ProcurementDetailsGroup', label: 'Preferred Currency' } ]
+  PreferredCurrency;
+  
 //   ── Exchange Rate & Totals facet ────────────────────────────────────────
-  @UI.lineItem:       [ { position: 60, importance: #HIGH } ]
+  @UI.lineItem:       [ { position: 70, importance: #HIGH } ]
   @UI.fieldGroup:     [ { position: 10, qualifier: 'ExchangeRateInfoGroup' } ]
   ExchangeRate;
   
-  @UI.lineItem:       [ { position: 70, importance: #HIGH } ]
+  @UI.lineItem:       [ { position: 80, importance: #HIGH } ]
   @UI.fieldGroup:     [ { position: 20, qualifier: 'ExchangeRateInfoGroup' } ]
   TotalInPreferredCcy;
   
-  @UI.fieldGroup:     [ { position: 30, qualifier: 'ExchangeRateInfoGroup' } ]
+  @UI.fieldGroup:     [ { position: 30, qualifier: 'ExchangeRateInfoGroup', label: 'Rate Fetch Time' } ]
   RateFetchTimestamp;
   
   @UI.fieldGroup:     [ { position: 40, qualifier: 'ExchangeRateInfoGroup' } ]
@@ -65,8 +69,8 @@ annotate view ZC_SCMPROC with
   ApiMessage;
   
 
-  @UI.lineItem: [ {  position: 80, importance: #HIGH } ]
-  @UI.fieldGroup:     [ { position: 50, qualifier: 'ProcurementDetailsGroup' } ]
+  @UI.lineItem: [ {  position: 90, importance: #HIGH } ]
+  @UI.fieldGroup:     [ { position: 60, qualifier: 'ProcurementDetailsGroup' } ]
   @UI.textArrangement: #TEXT_ONLY
   OverallStatus;
   

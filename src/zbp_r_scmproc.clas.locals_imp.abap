@@ -5,7 +5,7 @@ CLASS lhc_zr_scmproc DEFINITION INHERITING FROM cl_abap_behavior_handler.
         IMPORTING
         REQUEST requested_authorizations FOR Procurement
         RESULT result,
-      setProcurementId FOR DETERMINE ON MODIFY
+      setProcurementId FOR DETERMINE ON SAVE
         IMPORTING keys FOR Procurement~setProcurementId,
       determineExchangeRateTotal FOR DETERMINE ON MODIFY
         IMPORTING keys FOR Procurement~determineExchangeRateTotal,
@@ -181,7 +181,7 @@ CLASS lhc_zr_scmproc IMPLEMENTATION.
     RESULT DATA(lt_procurement)
     FAILED DATA(lt_failed).
 
-    failed = CORRESPONDING #( deep lt_failed ).
+    failed = CORRESPONDING #( DEEP lt_failed ).
 
     LOOP AT lt_procurement INTO DATA(ls_procurement).
       " Invalidate state messages

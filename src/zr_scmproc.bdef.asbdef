@@ -36,7 +36,7 @@ authorization master ( global )
   draft action Resume;
   draft determine action Prepare { validation validateCurrencies; validation validateQuantityAndPrice; }
 
-  determination setProcurementId on modify { create; }
+  determination setProcurementId on save { create; }
   determination determineExchangeRateTotal on modify
   { field UnitPrice; field Quantity;
     field SourceCurrency; field PreferredCurrency; }

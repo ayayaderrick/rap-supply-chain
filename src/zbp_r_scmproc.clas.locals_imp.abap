@@ -98,17 +98,17 @@ CLASS lhc_zr_scmproc IMPLEMENTATION.
     ENTITY Procurement
     FIELDS ( UnitPrice Quantity SourceCurrency PreferredCurrency )
     WITH CORRESPONDING #( keys )
-    RESULT DATA(procurements)
-    FAILED DATA(failed_read).
+    RESULT DATA(lt_procurement)
+    FAILED DATA(lt_failed_read).
 
-    IF procurements IS INITIAL.
+    IF lt_procurement IS INITIAL.
       RETURN.
     ENDIF.
 
-    DATA update_table TYPE TABLE FOR UPDATE zr_scmproc\\Procurement.
+    DATA lt_updates TYPE TABLE FOR UPDATE zr_scmproc\\Procurement.
     DATA(api) = get_api_client(  ).
 
-    LOOP AT procurements ASSIGNING FIELD-SYMBOL(<procurement>).
+    LOOP AT lt_procurement ASSIGNING FIELD-SYMBOL(<procurement>).
       " Skip rows where the user has not yet filled in the required fields
       IF <procurement>-UnitPrice IS INITIAL
       OR <procurement>-Quantity IS INITIAL
@@ -119,20 +119,20 @@ CLASS lhc_zr_scmproc IMPLEMENTATION.
 
 
       TRY.
-          DATA(exchange_rate) = api->get_exchange_rate(
+          DATA(lv_exchange_rate) = api->get_exchange_rate(
               source_currency = <procurement>-SourceCurrency
               target_currency = <procurement>-PreferredCurrency
            ).
 
-          DATA(total) = <procurement>-Quantity * CONV decfloat34( <procurement>-UnitPrice ) * exchange_rate.
+          DATA(lv_total) = <procurement>-Quantity * CONV decfloat34( <procurement>-UnitPrice ) * lv_exchange_rate.
 
           APPEND VALUE #(
             %tky = <procurement>-%tky
-            ExchangeRate = exchange_rate
-            TotalInPreferredCcy = CONV #( total )
-            ApiMessage = |Rate: 1 { <procurement>-SourceCurrency } = { exchange_rate }|
+            ExchangeRate = lv_exchange_rate
+            TotalInPreferredCcy = CONV #( lv_total )
+            ApiMessage = |Rate: 1 { <procurement>-SourceCurrency } = { lv_exchange_rate }|
                                   & |{ <procurement>-PreferredCurrency } (live from  open.er-api.com)|
-           ) TO update_table.
+           ) TO lt_updates.
         CATCH zcx_scm_api_error INTO DATA(api_error).
           " Write the error into ApiMessage so the UI can display it.
           " Do NOT raise or fail — the determination contract forbids rejection.
@@ -141,18 +141,18 @@ CLASS lhc_zr_scmproc IMPLEMENTATION.
             ExchangeRate          = 0
             TotalInPreferredCcy   = 0
             ApiMessage            = |⚠ { api_error->get_text( ) }|
-           ) TO update_table.
+           ) TO lt_updates.
       ENDTRY.
 
     ENDLOOP.
 
     " Push the calculated values back into the transactional buffer
-    IF update_table IS NOT INITIAL.
+    IF lt_updates IS NOT INITIAL.
       MODIFY ENTITIES OF zr_scmproc IN LOCAL MODE
       ENTITY Procurement
       UPDATE FIELDS ( ExchangeRate TotalInPreferredCcy RateFetchTimestamp ApiMessage )
-      WITH update_table
-      REPORTED DATA(reported_modify).
+      WITH lt_updates
+      REPORTED DATA(lt_reported_modify).
     ENDIF.
 
   ENDMETHOD.

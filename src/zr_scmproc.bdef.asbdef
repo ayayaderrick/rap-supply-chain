@@ -41,6 +41,8 @@ authorization master ( global )
   { field UnitPrice; field Quantity;
     field SourceCurrency; field PreferredCurrency; }
 
+  validation validateCurrencies on save {create; field SourceCurrency; field PreferredCurrency;}
+
   side effects
   {
     field UnitPrice affects field TotalInPreferredCcy, field ExchangeRate, field ApiMessage, field RateFetchTimestamp;

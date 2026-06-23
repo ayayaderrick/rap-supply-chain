@@ -8,7 +8,9 @@ CLASS lhc_zr_scmproc DEFINITION INHERITING FROM cl_abap_behavior_handler.
       setProcurementId FOR DETERMINE ON MODIFY
         IMPORTING keys FOR Procurement~setProcurementId,
       determineExchangeRateTotal FOR DETERMINE ON MODIFY
-        IMPORTING keys FOR Procurement~determineExchangeRateTotal.
+        IMPORTING keys FOR Procurement~determineExchangeRateTotal,
+      validateCurrencies FOR VALIDATE ON SAVE
+        IMPORTING keys FOR Procurement~validateCurrencies.
 
     " ── Helpers ────────────────────────────────────────────────────────────
     " Lazy-initialised so the unit test can inject a double before first use.
@@ -162,6 +164,73 @@ CLASS lhc_zr_scmproc IMPLEMENTATION.
       api_client = zcl_scm_exch_rate_api=>create(  ).
     ENDIF.
     result = api_client.
+  ENDMETHOD.
+
+
+  "────────────────────────────────────────────────────────────────────────────
+  " Validation: currencies must be different and non-empty.
+  "────────────────────────────────────────────────────────────────────────────
+  METHOD validateCurrencies.
+
+    READ ENTITIES OF zr_scmproc IN LOCAL MODE
+    ENTITY Procurement
+    FIELDS ( SourceCurrency PreferredCurrency )
+    WITH CORRESPONDING #( keys )
+    RESULT DATA(procurements)
+    FAILED DATA(failed_read).
+
+    CONSTANTS status_invalid TYPE abap_bool VALUE abap_true.
+
+    LOOP AT procurements INTO DATA(procurement).
+      " Invalidate state messages
+      APPEND VALUE #(
+          %tky = procurement-%tky
+          %state_area = 'VALIDATE_CURRENCIES'
+       ) TO reported-procurement.
+
+      IF procurement-SourceCurrency IS INITIAL.
+        APPEND VALUE #( %tky = procurement-%tky ) TO failed-procurement.
+        APPEND VALUE #(
+            %tky = procurement-%tky
+            %msg = new_message_with_text(
+                severity = if_abap_behv_message=>severity-error
+                text = 'Source currency must not be empty.'
+             )
+            %element-SourceCurrency = if_abap_behv=>mk-on
+            %state_area = 'VALIDATE_CURRENCIES'
+         ) TO reported-procurement.
+        CONTINUE.
+      ENDIF.
+
+      IF procurement-PreferredCurrency IS INITIAL.
+        APPEND VALUE #( %tky = procurement-%tky ) TO failed-procurement.
+        APPEND VALUE #(
+            %tky = procurement-%tky
+            %msg = new_message_with_text(
+                severity = if_abap_behv_message=>severity-error
+                text = 'Preferred currency must not be empty.'
+             )
+            %element-PreferredCurrency = if_abap_behv=>mk-on
+            %state_area = 'VALIDATE_CURRENCIES'
+         ) TO reported-procurement.
+        CONTINUE.
+      ENDIF.
+
+      IF procurement-SourceCurrency = procurement-PreferredCurrency.
+        APPEND VALUE #( %tky = procurement-%tky ) TO failed-procurement.
+        APPEND VALUE #(
+            %tky = procurement-%tky
+            %msg = new_message_with_text(
+                severity = if_abap_behv_message=>severity-error
+                text = |Source and preferred currency cannot be the same. Choose a different target currency|
+             )
+            %element-SourceCurrency = if_abap_behv=>mk-on
+            %element-PreferredCurrency = if_abap_behv=>mk-on
+            %state_area = 'VALIDATE_CURRENCIES'
+         ) TO reported-procurement.
+      ENDIF.
+    ENDLOOP.
+
   ENDMETHOD.
 
 ENDCLASS.

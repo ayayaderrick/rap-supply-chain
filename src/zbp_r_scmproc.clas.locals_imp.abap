@@ -178,20 +178,22 @@ CLASS lhc_zr_scmproc IMPLEMENTATION.
     ENTITY Procurement
     FIELDS ( SourceCurrency PreferredCurrency )
     WITH CORRESPONDING #( keys )
-    RESULT DATA(procurements)
-    FAILED DATA(failed_read).
+    RESULT DATA(lt_procurement)
+    FAILED DATA(lt_failed).
 
-    LOOP AT procurements INTO DATA(procurement).
+    failed = CORRESPONDING #( deep lt_failed ).
+
+    LOOP AT lt_procurement INTO DATA(ls_procurement).
       " Invalidate state messages
       APPEND VALUE #(
-          %tky = procurement-%tky
+          %tky = ls_procurement-%tky
           %state_area = 'VALIDATE_CURRENCIES'
        ) TO reported-procurement.
 
-      IF procurement-SourceCurrency IS INITIAL.
-        APPEND VALUE #( %tky = procurement-%tky ) TO failed-procurement.
+      IF ls_procurement-SourceCurrency IS INITIAL.
+        APPEND VALUE #( %tky = ls_procurement-%tky ) TO failed-procurement.
         APPEND VALUE #(
-            %tky = procurement-%tky
+            %tky = ls_procurement-%tky
             %msg = new_message_with_text(
                 severity = if_abap_behv_message=>severity-error
                 text = 'Source currency must not be empty.'
@@ -202,10 +204,10 @@ CLASS lhc_zr_scmproc IMPLEMENTATION.
         CONTINUE.
       ENDIF.
 
-      IF procurement-PreferredCurrency IS INITIAL.
-        APPEND VALUE #( %tky = procurement-%tky ) TO failed-procurement.
+      IF ls_procurement-PreferredCurrency IS INITIAL.
+        APPEND VALUE #( %tky = ls_procurement-%tky ) TO failed-procurement.
         APPEND VALUE #(
-            %tky = procurement-%tky
+            %tky = ls_procurement-%tky
             %msg = new_message_with_text(
                 severity = if_abap_behv_message=>severity-error
                 text = 'Preferred currency must not be empty.'
@@ -216,10 +218,10 @@ CLASS lhc_zr_scmproc IMPLEMENTATION.
         CONTINUE.
       ENDIF.
 
-      IF procurement-SourceCurrency = procurement-PreferredCurrency.
-        APPEND VALUE #( %tky = procurement-%tky ) TO failed-procurement.
+      IF ls_procurement-SourceCurrency = ls_procurement-PreferredCurrency.
+        APPEND VALUE #( %tky = ls_procurement-%tky ) TO failed-procurement.
         APPEND VALUE #(
-            %tky = procurement-%tky
+            %tky = ls_procurement-%tky
             %msg = new_message_with_text(
                 severity = if_abap_behv_message=>severity-error
                 text = |Source and preferred currency cannot be the same. Choose a different target currency|

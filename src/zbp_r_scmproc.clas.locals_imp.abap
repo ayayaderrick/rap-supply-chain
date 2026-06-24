@@ -1,3 +1,16 @@
+"══════════════════════════════════════════════════════════════════════════════
+" Status constants — single source of truth. Never use bare literals.
+"══════════════════════════════════════════════════════════════════════════════
+CLASS lsc_procurement_status DEFINITION FINAL.
+  PUBLIC SECTION.
+    CONSTANTS:
+      open     TYPE zscm_overall_status VALUE 'O',
+      approved TYPE zscm_overall_status VALUE 'A'.
+ENDCLASS.
+
+CLASS lsc_procurement_status IMPLEMENTATION.
+ENDCLASS.
+
 CLASS lhc_zr_scmproc DEFINITION INHERITING FROM cl_abap_behavior_handler.
   PRIVATE SECTION.
     METHODS:
@@ -12,7 +25,9 @@ CLASS lhc_zr_scmproc DEFINITION INHERITING FROM cl_abap_behavior_handler.
       validateCurrencies FOR VALIDATE ON SAVE
         IMPORTING keys FOR Procurement~validateCurrencies,
       validateQuantityAndPrice FOR VALIDATE ON SAVE
-        IMPORTING keys FOR Procurement~validateQuantityAndPrice.
+        IMPORTING keys FOR Procurement~validateQuantityAndPrice,
+      refreshRate FOR MODIFY
+        IMPORTING keys FOR ACTION Procurement~refreshRate RESULT result.
 
     " ── Helpers ────────────────────────────────────────────────────────────
     " Lazy-initialised so the unit test can inject a double before first use.
@@ -284,6 +299,9 @@ CLASS lhc_zr_scmproc IMPLEMENTATION.
     ENDLOOP.
 
 
+  ENDMETHOD.
+
+  METHOD refreshRate.
   ENDMETHOD.
 
 ENDCLASS.

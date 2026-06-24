@@ -44,6 +44,8 @@ authorization master ( global )
   validation validateCurrencies on save { create; field SourceCurrency; field PreferredCurrency; }
   validation validateQuantityAndPrice on save { create; field Quantity; field UnitPrice; }
 
+  action refreshRate result [1] $self;
+
   side effects
   {
     field UnitPrice affects field TotalInPreferredCcy, field ExchangeRate, field ApiMessage, field RateFetchTimestamp;

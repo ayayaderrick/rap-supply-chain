@@ -34,6 +34,15 @@ CLASS lhc_zr_scmproc DEFINITION INHERITING FROM cl_abap_behavior_handler.
     CLASS-DATA api_client TYPE REF TO zif_scm_exch_rate_api.
     CLASS-METHODS get_api_client RETURNING VALUE(result) TYPE REF TO zif_scm_exch_rate_api.
 
+    " Shared rate-fetch logic used by both the determination and the action
+    TYPES: ts_entity_result TYPE STRUCTURE FOR READ RESULT zr_scmproc\\Procurement.
+    TYPES: ts_entity_update TYPE STRUCTURE FOR UPDATE zr_scmproc\\Procurement.
+    CLASS-METHODS fetch_and_build_update
+      IMPORTING procurement   TYPE ts_entity_result
+      RETURNING VALUE(result) TYPE ts_entity_update
+      RAISING   zcx_scm_api_error.
+
+
 ENDCLASS.
 
 CLASS lhc_zr_scmproc IMPLEMENTATION.
@@ -301,7 +310,100 @@ CLASS lhc_zr_scmproc IMPLEMENTATION.
 
   ENDMETHOD.
 
+
+  "────────────────────────────────────────────────────────────────────────────
+  " Action: RefreshRate
+  " Re-fetches the live exchange rate on demand. Reports errors via the
+  " RAP message framework so the user sees them as Fiori toast messages.
+  "────────────────────────────────────────────────────────────────────────────
   METHOD refreshRate.
+
+    READ ENTITIES OF zr_scmproc IN LOCAL MODE
+    ENTITY Procurement
+    FIELDS ( UnitPrice Quantity SourceCurrency PreferredCurrency )
+    WITH CORRESPONDING #( keys )
+    RESULT DATA(lt_procurement)
+    FAILED DATA(lt_failed_read).
+
+    failed = CORRESPONDING #( DEEP lt_failed_read ).
+
+    DATA lt_updates TYPE TABLE FOR UPDATE zr_scmproc\\Procurement.
+
+    LOOP AT lt_procurement INTO DATA(ls_procurement).
+      IF ls_procurement-SourceCurrency IS INITIAL OR ls_procurement-PreferredCurrency IS INITIAL.
+        APPEND VALUE #( %tky = ls_procurement-%tky ) TO failed-procurement.
+        APPEND VALUE #(
+            %tky = ls_procurement-%tky
+            %msg = new_message_with_text(
+                severity = if_abap_behv_message=>severity-error
+                text = 'Cannot refresh rate: source and preferred currency must be filled first.'
+             )
+         ) TO reported-procurement.
+      ENDIF.
+      CONTINUE.
+
+      TRY.
+          APPEND fetch_and_build_update( ls_procurement ) TO lt_updates.
+        CATCH zcx_scm_api_error INTO DATA(api_error).
+          APPEND VALUE #( %tky = ls_procurement-%tky ) TO failed-procurement.
+          APPEND VALUE #(
+              %tky = ls_procurement-%tky
+              %msg = new_message_with_text(
+                  severity = if_abap_behv_message=>severity-error
+                  text = api_error->get_text(  )
+               )
+           ) TO reported-procurement.
+          CONTINUE.
+      ENDTRY.
+    ENDLOOP.
+
+    CHECK lt_updates IS NOT INITIAL.
+
+    MODIFY ENTITIES OF zr_scmproc IN LOCAL MODE
+    ENTITY Procurement
+    UPDATE FIELDS ( ExchangeRate TotalInPreferredCcy RateFetchTimestamp ApiMessage )
+    WITH lt_updates
+    REPORTED DATA(lt_reported_modify).
+
+    " Return the updated entities as the action result
+    READ ENTITIES OF zr_scmproc IN LOCAL MODE
+    ENTITY Procurement
+    ALL FIELDS WITH CORRESPONDING #( lt_updates )
+    RESULT DATA(lt_updated_entities)
+    FAILED DATA(lt_failed_read2).
+
+    failed = CORRESPONDING #( DEEP lt_failed_read2 ).
+
+    result = VALUE #( FOR entity IN lt_updated_entities (
+        %tky = entity-%tky
+        %param = CORRESPONDING #( entity )
+    ) ).
+
+  ENDMETHOD.
+
+  "────────────────────────────────────────────────────────────────────────────
+  " Shared helper: call the API and build an update row.
+  " Raised zcx_scm_api_error propagates to the caller; it decides how
+  " to surface it (determination → ApiMessage, action → reported message).
+  "────────────────────────────────────────────────────────────────────────────
+  METHOD fetch_and_build_update.
+
+    DATA(lv_exchange_rate) = get_api_client(  )->get_exchange_rate(
+        source_currency = procurement-SourceCurrency
+        target_currency = procurement-PreferredCurrency
+     ).
+
+    DATA(lv_total) = procurement-Quantity * CONV decfloat34( procurement-UnitPrice ) * lv_exchange_rate.
+
+    result = VALUE #(
+       %tky = procurement-%tky
+       ExchangeRate = lv_exchange_rate
+       TotalInPreferredCcy = CONV #( lv_total )
+       RateFetchTimestamp = cl_abap_context_info=>get_system_time( )
+       ApiMessage = |Rate Fetched: 1 { procurement-SourceCurrency } = { lv_exchange_rate }|
+                                 & |{ procurement-PreferredCurrency } (live from  open.er-api.com)|
+     ).
+
   ENDMETHOD.
 
 ENDCLASS.

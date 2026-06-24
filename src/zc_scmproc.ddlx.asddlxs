@@ -53,8 +53,8 @@ annotate view ZC_SCMPROC with
   PreferredCurrency;
   
 //   ── Exchange Rate & Totals facet ────────────────────────────────────────
-  @UI.lineItem:       [ { position: 70, importance: #HIGH } ]
-  @UI.fieldGroup:     [ { position: 10, qualifier: 'ExchangeRateInfoGroup' } ]
+  @UI.lineItem:       [ { position: 70, importance: #HIGH, label: 'Exchange Rate' } ]
+  @UI.fieldGroup:     [ { position: 10, qualifier: 'ExchangeRateInfoGroup', label: 'Exchange Rate' } ]
   ExchangeRate;
   
   @UI.lineItem:       [ { position: 80, importance: #HIGH } ]

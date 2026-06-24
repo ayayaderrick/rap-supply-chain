@@ -27,7 +27,9 @@ CLASS lhc_zr_scmproc DEFINITION INHERITING FROM cl_abap_behavior_handler.
       validateQuantityAndPrice FOR VALIDATE ON SAVE
         IMPORTING keys FOR Procurement~validateQuantityAndPrice,
       refreshRate FOR MODIFY
-        IMPORTING keys FOR ACTION Procurement~refreshRate RESULT result.
+        IMPORTING keys FOR ACTION Procurement~refreshRate RESULT result,
+      approve FOR MODIFY
+        IMPORTING keys FOR ACTION Procurement~approve RESULT result.
 
     " ── Helpers ────────────────────────────────────────────────────────────
     " Lazy-initialised so the unit test can inject a double before first use.
@@ -403,6 +405,69 @@ CLASS lhc_zr_scmproc IMPLEMENTATION.
        ApiMessage = |Rate Fetched: 1 { procurement-SourceCurrency } = { lv_exchange_rate }|
                                  & |{ procurement-PreferredCurrency } (live from  open.er-api.com)|
      ).
+
+  ENDMETHOD.
+
+  "────────────────────────────────────────────────────────────────────────────
+  " Action: Approve
+  " Transitions OverallStatus from Open → Approved.
+  " Rejects if no valid exchange rate has been fetched yet.
+  "────────────────────────────────────────────────────────────────────────────
+  METHOD approve.
+
+    READ ENTITIES OF zr_scmproc IN LOCAL MODE
+    ENTITY Procurement
+    FIELDS ( OverallStatus ExchangeRate TotalInPreferredCcy )
+    WITH CORRESPONDING #( keys )
+    RESULT DATA(lt_procurement)
+    FAILED DATA(lt_failed_read).
+
+    failed = CORRESPONDING #( DEEP lt_failed_read ).
+
+    DATA lt_updates TYPE TABLE FOR UPDATE zr_scmproc\\Procurement.
+
+    LOOP AT lt_procurement INTO DATA(ls_procurement).
+      IF ls_procurement-ExchangeRate IS INITIAL OR ls_procurement-ExchangeRate = 0.
+        APPEND VALUE #( %tky = ls_procurement-%tky ) TO failed-procurement.
+        APPEND VALUE #(
+            %tky = ls_procurement-%tky
+            %msg = new_message_with_text(
+                severity = if_abap_behv_message=>severity-error
+                text = 'Cannot approve: no exchange rate has been fetched. '
+                        && 'Enter source and preferred currency and wait for the '
+                        && 'rate to appear, or click Refresh Rate.'
+             )
+         ) TO reported-procurement.
+        CONTINUE.
+      ENDIF.
+
+      APPEND VALUE #(
+        %tky = ls_procurement-%tky
+        OverallStatus = lsc_procurement_status=>approved
+       ) TO lt_updates.
+    ENDLOOP.
+
+    CHECK lt_updates IS NOT INITIAL.
+
+    MODIFY ENTITIES OF zr_scmproc IN LOCAL MODE
+    ENTITY Procurement
+    UPDATE FIELDS ( OverallStatus )
+    WITH lt_updates
+    REPORTED DATA(lt_reported_modify).
+
+    " Return the updated entities
+    READ ENTITIES OF zr_scmproc IN LOCAL MODE
+    ENTITY Procurement
+    ALL FIELDS WITH CORRESPONDING #( lt_updates )
+    RESULT DATA(lt_updated_entities)
+    FAILED DATA(lt_failed_read2).
+
+    failed = CORRESPONDING #( DEEP lt_failed_read2 ).
+
+    result = VALUE #( FOR entity IN lt_updated_entities (
+        %tky = entity-%tky
+        %param = CORRESPONDING #( entity )
+     ) ).
 
   ENDMETHOD.
 

@@ -17,4 +17,7 @@ use etag
   use action Resume;
   use action Prepare;
 
+  use action refreshRate;
+  use action approve;
+
 }

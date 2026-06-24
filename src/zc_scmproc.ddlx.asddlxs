@@ -19,13 +19,13 @@ annotate view ZC_SCMPROC with
    ]
    
  @UI.lineItem: [
-//    { position: 5, type: #FOR_ACTION, dataAction: 'Approve',     label: 'Approve Order',  emphasized: true  },
-    { position: 8, type: #FOR_ACTION, dataAction: 'RefreshRate', label: 'Refresh Rate' },
+    { type: #FOR_ACTION, dataAction: 'approve',     label: 'Approve Order',  emphasized: true  },
+    { type: #FOR_ACTION, dataAction: 'refreshRate', label: 'Refresh Rate' },
     { position: 10, importance: #HIGH }
   ]
   @UI.identification: [
-//    { position: 5,  type: #FOR_ACTION, dataAction: 'Approve',     label: 'Approve Order',  emphasized: true },
-    { position: 8,  type: #FOR_ACTION, dataAction: 'RefreshRate', label: 'Refresh Rate' }
+    { type: #FOR_ACTION, dataAction: 'approve',     label: 'Approve Order',  emphasized: true },
+    { type: #FOR_ACTION, dataAction: 'refreshRate', label: 'Refresh Rate' }
   ]
   @UI.fieldGroup:     [ { position: 5, qualifier: 'ProcurementDetailsGroup' } ]
   @UI.selectionField: [ { position: 10 } ]

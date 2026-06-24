@@ -45,6 +45,7 @@ authorization master ( global )
   validation validateQuantityAndPrice on save { create; field Quantity; field UnitPrice; }
 
   action refreshRate result [1] $self;
+  action approve result [1] $self;
 
   side effects
   {

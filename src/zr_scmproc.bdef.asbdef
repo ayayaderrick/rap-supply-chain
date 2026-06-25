@@ -40,6 +40,7 @@ authorization master ( global )
   determination determineExchangeRateTotal on modify
   { field UnitPrice; field Quantity;
     field SourceCurrency; field PreferredCurrency; }
+  determination setInitialStatus on modify {create;}
 
   validation validateCurrencies on save { create; field SourceCurrency; field PreferredCurrency; }
   validation validateQuantityAndPrice on save { create; field Quantity; field UnitPrice; }

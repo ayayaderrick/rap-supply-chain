@@ -345,8 +345,9 @@ CLASS lhc_zr_scmproc IMPLEMENTATION.
                 text = 'Cannot refresh rate: source and preferred currency must be filled first.'
              )
          ) TO reported-procurement.
+        CONTINUE.
       ENDIF.
-      CONTINUE.
+
 
       TRY.
           APPEND fetch_and_build_update( ls_procurement ) TO lt_updates.
@@ -363,13 +364,17 @@ CLASS lhc_zr_scmproc IMPLEMENTATION.
       ENDTRY.
     ENDLOOP.
 
-    CHECK lt_updates IS NOT INITIAL.
+    IF lt_updates IS INITIAL.
+      RETURN.
+    ENDIF.
 
     MODIFY ENTITIES OF zr_scmproc IN LOCAL MODE
     ENTITY Procurement
     UPDATE FIELDS ( ExchangeRate TotalInPreferredCcy RateFetchTimestamp ApiMessage )
     WITH lt_updates
     REPORTED DATA(lt_reported_modify).
+
+    reported = CORRESPONDING #( base ( reported ) lt_reported_modify ).
 
     " Return the updated entities as the action result
     READ ENTITIES OF zr_scmproc IN LOCAL MODE
@@ -378,7 +383,7 @@ CLASS lhc_zr_scmproc IMPLEMENTATION.
     RESULT DATA(lt_updated_entities)
     FAILED DATA(lt_failed_read2).
 
-    failed = CORRESPONDING #( DEEP lt_failed_read2 ).
+    failed = CORRESPONDING #( base ( failed ) lt_failed_read2 ).
 
     result = VALUE #( FOR entity IN lt_updated_entities (
         %tky = entity-%tky
@@ -525,11 +530,11 @@ CLASS lhc_zr_scmproc IMPLEMENTATION.
                                   AND line-ExchangeRate <> 0
                                   THEN if_abap_behv=>fc-o-enabled
                                   ELSE if_abap_behv=>fc-o-disabled )
-        %action-refreshRate = cond #( when line-OverallStatus = lsc_procurement_status=>open
-                                      and line-SourceCurrency is not initial
-                                      and line-PreferredCurrency is not initial
-                                      then if_abap_behv=>fc-o-enabled
-                                      else if_abap_behv=>fc-o-disabled )
+        %action-refreshRate = COND #( WHEN line-OverallStatus = lsc_procurement_status=>open
+                                      AND line-SourceCurrency IS NOT INITIAL
+                                      AND line-PreferredCurrency IS NOT INITIAL
+                                      THEN if_abap_behv=>fc-o-enabled
+                                      ELSE if_abap_behv=>fc-o-disabled )
      ) ).
 
   ENDMETHOD.

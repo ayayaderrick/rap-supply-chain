@@ -29,7 +29,9 @@ CLASS lhc_zr_scmproc DEFINITION INHERITING FROM cl_abap_behavior_handler.
       refreshRate FOR MODIFY
         IMPORTING keys FOR ACTION Procurement~refreshRate RESULT result,
       approve FOR MODIFY
-        IMPORTING keys FOR ACTION Procurement~approve RESULT result.
+        IMPORTING keys FOR ACTION Procurement~approve RESULT result,
+      setInitialStatus FOR DETERMINE ON MODIFY
+        IMPORTING keys FOR Procurement~setInitialStatus.
 
     " ── Helpers ────────────────────────────────────────────────────────────
     " Lazy-initialised so the unit test can inject a double before first use.
@@ -468,6 +470,35 @@ CLASS lhc_zr_scmproc IMPLEMENTATION.
         %tky = entity-%tky
         %param = CORRESPONDING #( entity )
      ) ).
+
+  ENDMETHOD.
+
+  "────────────────────────────────────────────────────────────────────────────
+  " Determination: setInitialStatus
+  " Automatically sets OverallStatus to Open for new instances.
+  "────────────────────────────────────────────────────────────────────────────
+  METHOD setInitialStatus.
+
+    IF keys IS INITIAL.
+      RETURN.
+    ENDIF.
+
+    READ ENTITIES OF zr_scmproc IN LOCAL MODE
+    ENTITY Procurement
+    FIELDS ( OverallStatus )
+    WITH CORRESPONDING #( keys )
+    RESULT DATA(lt_procurement).
+
+    DELETE lt_procurement WHERE OverallStatus IS NOT INITIAL.
+    CHECK lt_procurement IS NOT INITIAL.
+
+    MODIFY ENTITIES OF zr_scmproc IN LOCAL MODE
+    ENTITY Procurement
+    UPDATE FIELDS ( OverallStatus )
+    WITH VALUE #( FOR line IN lt_procurement ( %tky = line-%tky OverallStatus = lsc_procurement_status=>open ) )
+    REPORTED DATA(lt_update_reported).
+
+    reported = CORRESPONDING #( DEEP lt_update_reported ).
 
   ENDMETHOD.
 

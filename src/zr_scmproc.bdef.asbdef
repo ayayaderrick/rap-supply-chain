@@ -32,7 +32,7 @@ authorization master ( global )
 
   draft action Activate optimized;
   draft action Discard;
-  draft action Edit;
+  draft action (features: instance) Edit;
   draft action Resume;
   draft determine action Prepare { validation validateCurrencies; validation validateQuantityAndPrice; }
 
@@ -45,8 +45,8 @@ authorization master ( global )
   validation validateCurrencies on save { create; field SourceCurrency; field PreferredCurrency; }
   validation validateQuantityAndPrice on save { create; field Quantity; field UnitPrice; }
 
-  action refreshRate result [1] $self;
-  action approve result [1] $self;
+  action (features: instance) refreshRate result [1] $self;
+  action (features: instance) approve result [1] $self;
 
   side effects
   {

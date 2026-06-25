@@ -31,7 +31,9 @@ CLASS lhc_zr_scmproc DEFINITION INHERITING FROM cl_abap_behavior_handler.
       approve FOR MODIFY
         IMPORTING keys FOR ACTION Procurement~approve RESULT result,
       setInitialStatus FOR DETERMINE ON MODIFY
-        IMPORTING keys FOR Procurement~setInitialStatus.
+        IMPORTING keys FOR Procurement~setInitialStatus,
+      get_instance_features FOR INSTANCE FEATURES
+        IMPORTING keys REQUEST requested_features FOR Procurement RESULT result.
 
     " ── Helpers ────────────────────────────────────────────────────────────
     " Lazy-initialised so the unit test can inject a double before first use.
@@ -499,6 +501,36 @@ CLASS lhc_zr_scmproc IMPLEMENTATION.
     REPORTED DATA(lt_update_reported).
 
     reported = CORRESPONDING #( DEEP lt_update_reported ).
+
+  ENDMETHOD.
+
+  METHOD get_instance_features.
+
+    READ ENTITIES OF zr_scmproc IN LOCAL MODE
+    ENTITY Procurement
+    FIELDS ( OverallStatus ExchangeRate SourceCurrency PreferredCurrency )
+    WITH CORRESPONDING #( keys )
+    RESULT DATA(lt_procurement)
+    FAILED DATA(lt_failed_read).
+
+    failed = CORRESPONDING #( DEEP lt_failed_read ).
+
+    result = VALUE #( FOR line IN lt_procurement (
+        %tky = line-%tky
+        %action-Edit = COND #( WHEN line-OverallStatus = lsc_procurement_status=>approved
+                               THEN if_abap_behv=>fc-o-disabled
+                               ELSE if_abap_behv=>fc-o-enabled )
+        %action-approve = COND #( WHEN line-OverallStatus = lsc_procurement_status=>open
+                                  AND line-ExchangeRate IS NOT INITIAL
+                                  AND line-ExchangeRate <> 0
+                                  THEN if_abap_behv=>fc-o-enabled
+                                  ELSE if_abap_behv=>fc-o-disabled )
+        %action-refreshRate = cond #( when line-OverallStatus = lsc_procurement_status=>open
+                                      and line-SourceCurrency is not initial
+                                      and line-PreferredCurrency is not initial
+                                      then if_abap_behv=>fc-o-enabled
+                                      else if_abap_behv=>fc-o-disabled )
+     ) ).
 
   ENDMETHOD.
 

@@ -29,6 +29,7 @@ annotate view ZC_SCMPROC with
   ]
   @UI.fieldGroup:     [ { position: 5, qualifier: 'ProcurementDetailsGroup' } ]
   @UI.selectionField: [ { position: 10 } ]
+  @Consumption.valueHelpDefinition: [{ entity: { name: 'ZSCM_I_ORDER_VH', element: 'ProcurementID' } }]
   ProcurementID;
   
   @UI.lineItem:       [ { position: 20, importance: #HIGH } ]

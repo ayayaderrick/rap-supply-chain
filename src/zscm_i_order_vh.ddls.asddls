@@ -3,7 +3,7 @@
 @EndUserText.label: 'Value Help for Orders'
 @Metadata.ignorePropagatedAnnotations: true
 @Search.searchable: true
-define view entity ZSCM_I_ORDER as select from ZR_SCMPROC
+define view entity ZSCM_I_ORDER_VH as select from ZR_SCMPROC
 {
     @UI.hidden: true
     key ProcurementUUID,

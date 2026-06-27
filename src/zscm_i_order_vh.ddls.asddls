@@ -8,8 +8,10 @@ define view entity ZSCM_I_ORDER_VH as select from ZR_SCMPROC
     @UI.hidden: true
     key ProcurementUUID,
     @Search.defaultSearchElement: true
+    @Search.fuzzinessThreshold: 0.8
     ProcurementID,
     @Search.defaultSearchElement: true
+    @Search.fuzzinessThreshold: 0.8
     MaterialName
     
 }

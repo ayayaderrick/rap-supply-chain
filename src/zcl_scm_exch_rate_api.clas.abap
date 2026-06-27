@@ -21,7 +21,8 @@ ENDCLASS.
 
 
 
-CLASS zcl_scm_exch_rate_api IMPLEMENTATION.
+CLASS ZCL_SCM_EXCH_RATE_API IMPLEMENTATION.
+
 
   METHOD create.
     result = NEW zcl_scm_exch_rate_api(  ).
@@ -57,12 +58,12 @@ CLASS zcl_scm_exch_rate_api IMPLEMENTATION.
          ).
 
       CATCH cx_web_http_client_error INTO DATA(http_error).
-      " Catches execution, communication, and protocol issues
+        " Catches execution, communication, and protocol issues
         RAISE EXCEPTION NEW zcx_scm_api_error( error_message = |Cannot reach the exchange rate API: { http_error->get_text(  ) }.|
                                                                && |Check that internet egress is allowed for this BTP subaccount.|
                                                previous      = http_error
                                                ).
-       CATCH cx_http_dest_provider_error INTO DATA(dest_error).
+      CATCH cx_http_dest_provider_error INTO DATA(dest_error).
         " Catches destination creation or URL parsing failures
         RAISE EXCEPTION NEW zcx_scm_api_error( error_message = |Failed to establish destination for URL: { dest_error->get_text(  ) }.|
                                                previous      = dest_error
@@ -71,9 +72,11 @@ CLASS zcl_scm_exch_rate_api IMPLEMENTATION.
 
   ENDMETHOD.
 
+
   METHOD extract_rate_from_json.
     " Response shape: { "result":"success", "base_code":"USD",
     "                   "rates": { "EUR":0.91, "GBP":0.79, ... } }
+
     " Strategy: locate the "rates":{...} block first to avoid false
     " matches in the provider/documentation URL strings.
     DATA(rates_block_pos) = find( val = json_body sub = `"rates":{` ).
@@ -122,5 +125,3 @@ CLASS zcl_scm_exch_rate_api IMPLEMENTATION.
 
   ENDMETHOD.
 ENDCLASS.
-
-

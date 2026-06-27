@@ -41,8 +41,10 @@ CLASS lhc_zr_scmproc DEFINITION INHERITING FROM cl_abap_behavior_handler.
     CLASS-METHODS get_api_client RETURNING VALUE(result) TYPE REF TO zif_scm_exch_rate_api.
 
     " Shared rate-fetch logic used by both the determination and the action
-    TYPES: ts_entity_result TYPE STRUCTURE FOR READ RESULT zr_scmproc\\Procurement.
-    TYPES: ts_entity_update TYPE STRUCTURE FOR UPDATE zr_scmproc\\Procurement.
+    TYPES: tt_procurement_read TYPE TABLE FOR READ RESULT zr_scmproc\\Procurement,
+           ts_entity_result    TYPE LINE OF tt_procurement_read.
+    TYPES: tt_procurement_update TYPE TABLE FOR UPDATE zr_scmproc\\Procurement,
+           ts_entity_update      TYPE LINE OF tt_procurement_update.
     CLASS-METHODS fetch_and_build_update
       IMPORTING procurement   TYPE ts_entity_result
       RETURNING VALUE(result) TYPE ts_entity_update
@@ -374,7 +376,7 @@ CLASS lhc_zr_scmproc IMPLEMENTATION.
     WITH lt_updates
     REPORTED DATA(lt_reported_modify).
 
-    reported = CORRESPONDING #( base ( reported ) lt_reported_modify ).
+    reported = CORRESPONDING #( BASE ( reported ) lt_reported_modify ).
 
     " Return the updated entities as the action result
     READ ENTITIES OF zr_scmproc IN LOCAL MODE
@@ -383,7 +385,7 @@ CLASS lhc_zr_scmproc IMPLEMENTATION.
     RESULT DATA(lt_updated_entities)
     FAILED DATA(lt_failed_read2).
 
-    failed = CORRESPONDING #( base ( failed ) lt_failed_read2 ).
+    failed = CORRESPONDING #( BASE ( failed ) lt_failed_read2 ).
 
     result = VALUE #( FOR entity IN lt_updated_entities (
         %tky = entity-%tky
@@ -404,14 +406,17 @@ CLASS lhc_zr_scmproc IMPLEMENTATION.
         target_currency = procurement-PreferredCurrency
      ).
 
-    DATA(lv_total) = procurement-Quantity * CONV decfloat34( procurement-UnitPrice ) * lv_exchange_rate.
+    DATA(rounded_rate) = CONV zscm_exchange_rate( lv_exchange_rate ).
+    DATA(lv_total) = procurement-Quantity * CONV decfloat34( procurement-UnitPrice ) * rounded_rate.
+
+
 
     result = VALUE #(
        %tky = procurement-%tky
-       ExchangeRate = lv_exchange_rate
+       ExchangeRate = rounded_rate
        TotalInPreferredCcy = CONV #( lv_total )
        RateFetchTimestamp = cl_abap_context_info=>get_system_time( )
-       ApiMessage = |Rate Fetched: 1 { procurement-SourceCurrency } = { lv_exchange_rate }|
+       ApiMessage = |Rate Fetched: 1 { procurement-SourceCurrency } = { rounded_rate }|
                                  & |{ procurement-PreferredCurrency } (live from  open.er-api.com)|
      ).
 

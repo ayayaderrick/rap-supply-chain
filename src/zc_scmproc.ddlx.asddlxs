@@ -35,6 +35,7 @@ annotate view ZC_SCMPROC with
   @UI.lineItem:       [ { position: 20, importance: #HIGH } ]
   @UI.fieldGroup:     [ { position: 10, qualifier: 'ProcurementDetailsGroup' } ]
   @UI.selectionField: [ { position: 20 } ]
+  @Consumption.valueHelpDefinition: [{ entity: { name: 'zscm_i_material_vh', element: 'MaterialName' } }]
   MaterialName;
   
   @UI.lineItem:       [ { position: 30, importance: #MEDIUM } ]

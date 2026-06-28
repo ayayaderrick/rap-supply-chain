@@ -328,7 +328,7 @@ CLASS lhc_zr_scmproc IMPLEMENTATION.
 
     READ ENTITIES OF zr_scmproc IN LOCAL MODE
     ENTITY Procurement
-    FIELDS ( UnitPrice Quantity SourceCurrency PreferredCurrency )
+    FIELDS ( UnitPrice Quantity SourceCurrency PreferredCurrency ExchangeRate TotalInPreferredCcy RateFetchTimestamp ApiMessage )
     WITH CORRESPONDING #( keys )
     RESULT DATA(lt_procurement)
     FAILED DATA(lt_failed_read).
@@ -374,7 +374,10 @@ CLASS lhc_zr_scmproc IMPLEMENTATION.
     ENTITY Procurement
     UPDATE FIELDS ( ExchangeRate TotalInPreferredCcy RateFetchTimestamp ApiMessage )
     WITH lt_updates
-    REPORTED DATA(lt_reported_modify).
+    REPORTED DATA(lt_reported_modify)
+    FAILED DATA(lt_failed_modify).
+
+    failed = CORRESPONDING #( BASE ( failed ) lt_failed_modify ).
 
     reported = CORRESPONDING #( BASE ( reported ) lt_reported_modify ).
 
@@ -408,14 +411,13 @@ CLASS lhc_zr_scmproc IMPLEMENTATION.
 
     DATA(rounded_rate) = CONV zscm_exchange_rate( lv_exchange_rate ).
     DATA(lv_total) = procurement-Quantity * CONV decfloat34( procurement-UnitPrice ) * rounded_rate.
-
-
+    GET TIME STAMP FIELD data(tsl).
 
     result = VALUE #(
        %tky = procurement-%tky
        ExchangeRate = rounded_rate
        TotalInPreferredCcy = CONV #( lv_total )
-       RateFetchTimestamp = cl_abap_context_info=>get_system_time( )
+       RateFetchTimestamp = tsl
        ApiMessage = |Rate Fetched: 1 { procurement-SourceCurrency } = { rounded_rate }|
                                  & |{ procurement-PreferredCurrency } (live from  open.er-api.com)|
      ).

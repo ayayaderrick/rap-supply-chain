@@ -86,11 +86,69 @@ CLASS ltc_procurement IMPLEMENTATION.
     ROLLBACK ENTITIES.
   ENDMETHOD.
 
+  "──────────────────────────────────────────────────────────────────────────
+  " Helper: create a procurement entity in the transactional buffer
+  " and return its generated UUID so tests can READ it afterwards.
+  "──────────────────────────────────────────────────────────────────────────
   METHOD create_test_procurement.
+
+    MODIFY ENTITIES OF zr_scmproc
+    ENTITY Procurement
+    CREATE FIELDS ( MaterialName SourceCurrency PreferredCurrency
+                        Quantity UnitPrice )
+    WITH VALUE #( (
+        %cid = procurement_id
+        MaterialName      = |Material { procurement_id }|
+        SourceCurrency    = source_currency
+        PreferredCurrency = preferred_ccy
+        Quantity          = quantity
+        UnitPrice         = unit_price
+     ) )
+     MAPPED DATA(mapped)
+     FAILED DATA(failed)
+     REPORTED DATA(reported).
+
+    IF mapped-procurement IS NOT INITIAL.
+      " Retrieve the UUID assigned by managed numbering
+      result_key = mapped-procurement[ 1 ]-ProcurementUUID.
+    ELSE.
+      cl_abap_unit_assert=>fail( msg = 'EML Create failed to produce a valid mapped UUID' ).
+    ENDIF.
 
   ENDMETHOD.
 
   METHOD determination_calculate_total.
+
+    api_double->simulated_rate = '1.2'.
+
+    DATA(uuid) = create_test_procurement(
+        procurement_id  = '01'
+        source_currency = 'USD'
+        preferred_ccy   = 'EUR'
+        quantity        = '10'
+        unit_price      = '100'
+     ).
+
+     READ ENTITIES OF zr_scmproc in local mode
+     ENTITY Procurement
+     FIELDS ( TotalInPreferredCcy ExchangeRate ApiMessage )
+     WITH VALUE #( ( ProcurementUUID = uuid ) )
+     RESULT data(lt_results).
+
+     data(ls_result) = lt_results[ 1 ].
+     cl_abap_unit_assert=>assert_equals(
+     msg = 'Total should be Qty × Price × Rate = 10 × 100 × 1.2 = 1200'
+     exp = conv zscm_total_in_preferred_ccy( '1200' )
+     act = ls_result-TotalInPreferredCcy ).
+
+     cl_abap_unit_assert=>assert_equals(
+     msg = 'ExchangeRate should reflect the simulated rate'
+     exp = conv zscm_exchange_rate( '1.2' )
+     act = ls_result-ExchangeRate ).
+
+     cl_abap_unit_assert=>assert_not_initial(
+     msg = 'ApiMessage should contain the rate description'
+     act = ls_result-ApiMessage ).
 
   ENDMETHOD.
 

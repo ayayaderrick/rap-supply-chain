@@ -11,7 +11,8 @@ ENDCLASS.
 CLASS lsc_procurement_status IMPLEMENTATION.
 ENDCLASS.
 
-CLASS lhc_zr_scmproc DEFINITION INHERITING FROM cl_abap_behavior_handler.
+CLASS ltc_procurement DEFINITION DEFERRED FOR TESTING.
+CLASS lhc_zr_scmproc DEFINITION INHERITING FROM cl_abap_behavior_handler FRIENDS ltc_procurement.
   PRIVATE SECTION.
     METHODS:
       get_global_authorizations FOR GLOBAL AUTHORIZATION
@@ -411,7 +412,7 @@ CLASS lhc_zr_scmproc IMPLEMENTATION.
 
     DATA(rounded_rate) = CONV zscm_exchange_rate( lv_exchange_rate ).
     DATA(lv_total) = procurement-Quantity * CONV decfloat34( procurement-UnitPrice ) * rounded_rate.
-    GET TIME STAMP FIELD data(tsl).
+    GET TIME STAMP FIELD DATA(tsl).
 
     result = VALUE #(
        %tky = procurement-%tky

@@ -24,6 +24,40 @@ CLASS ltc_procurement DEFINITION FINAL FOR TESTING
   RISK LEVEL HARMLESS.
 
   PRIVATE SECTION.
+    CLASS-DATA cds_environment TYPE REF TO if_cds_test_environment.
+    CLASS-DATA api_double       TYPE REF TO ltd_exchange_rate_api.
+
+    "! Instantiate class under test and setup test double frameworks
+    CLASS-METHODS class_setup    RAISING cx_static_check.
+    "! Destroy test environments and test doubles
+    CLASS-METHODS class_teardown.
+    METHODS:
+     "! Reset test doubles
+     setup,
+     "! Reset transactional buffer
+     teardown,
+
+     "! Check total of order instance
+     determination_calculate_total   FOR TESTING,
+     "! Check returned API message in case of api error
+     determination_handle_api_error  FOR TESTING,
+     "! Check empty currency field
+     determination_skip_empty_field FOR TESTING,
+     "! Check source and target currency are not same
+     validation_reject_same_curr FOR TESTING,
+     "! Check quantity field is not zero
+     validation_reject_zero_quan FOR TESTING,
+     "! Check price field is not zero
+     validation_rejects_zero_price    FOR TESTING.
+
+    " Helper: create a procurement record and return its UUID
+    METHODS create_test_procurement
+      IMPORTING procurement_id   TYPE zscm_procurement_id
+                source_currency  TYPE waers
+                preferred_ccy    TYPE waers
+                quantity         TYPE zscm_quantity
+                unit_price       TYPE zscm_unit_price
+      RETURNING VALUE(result_key) TYPE zr_scmproc-ProcurementUuid.
 
 
 ENDCLASS.
@@ -32,5 +66,49 @@ ENDCLASS.
 CLASS ltc_procurement IMPLEMENTATION.
 
 
+
+  METHOD class_setup.
+
+  ENDMETHOD.
+
+  METHOD class_teardown.
+
+  ENDMETHOD.
+
+  METHOD create_test_procurement.
+
+  ENDMETHOD.
+
+  METHOD determination_calculate_total.
+
+  ENDMETHOD.
+
+  METHOD determination_handle_api_error.
+
+  ENDMETHOD.
+
+  METHOD determination_skip_empty_field.
+
+  ENDMETHOD.
+
+  METHOD setup.
+
+  ENDMETHOD.
+
+  METHOD teardown.
+
+  ENDMETHOD.
+
+  METHOD validation_rejects_zero_price.
+
+  ENDMETHOD.
+
+  METHOD validation_reject_same_curr.
+
+  ENDMETHOD.
+
+  METHOD validation_reject_zero_quan.
+
+  ENDMETHOD.
 
 ENDCLASS.

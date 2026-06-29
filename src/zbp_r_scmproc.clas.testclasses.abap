@@ -11,8 +11,7 @@ ENDCLASS.
 CLASS ltd_exchange_rate_api IMPLEMENTATION.
   METHOD zif_scm_exch_rate_api~get_exchange_rate.
     IF should_fail = abap_true.
-      RAISE EXCEPTION NEW zcx_scm_api_error(
-        error_message = 'Simulated API failure' ).
+      RAISE EXCEPTION NEW zcx_scm_api_error( error_message = 'Simulated API failure' ).
     ENDIF.
     result = simulated_rate.
   ENDMETHOD.
@@ -32,31 +31,31 @@ CLASS ltc_procurement DEFINITION FINAL FOR TESTING
     "! Destroy test environments and test doubles
     CLASS-METHODS class_teardown.
     METHODS:
-     "! Reset test doubles
-     setup,
-     "! Reset transactional buffer
-     teardown,
+      "! Reset test doubles
+      setup,
+      "! Reset transactional buffer
+      teardown,
 
-     "! Check total of order instance
-     determination_calculate_total   FOR TESTING,
-     "! Check returned API message in case of api error
-     determination_handle_api_error  FOR TESTING,
-     "! Check empty currency field
-     determination_skip_empty_field FOR TESTING,
-     "! Check source and target currency are not same
-     validation_reject_same_curr FOR TESTING,
-     "! Check quantity field is not zero
-     validation_reject_zero_quan FOR TESTING,
-     "! Check price field is not zero
-     validation_rejects_zero_price    FOR TESTING.
+      "! Check total of order instance
+      determination_calculate_total    FOR TESTING,
+      "! Check returned API message in case of api error
+      determination_handle_api_error   FOR TESTING,
+      "! Check empty currency field
+      determination_skip_empty_field   FOR TESTING,
+      "! Check source and target currency are not same
+      validation_reject_same_curr      FOR TESTING,
+      "! Check quantity field is not zero
+      validation_reject_zero_quan      FOR TESTING,
+      "! Check price field is not zero
+      validation_rejects_zero_price    FOR TESTING.
 
     " Helper: create a procurement record and return its UUID
     METHODS create_test_procurement
-      IMPORTING procurement_id   TYPE zscm_procurement_id
-                source_currency  TYPE waers
-                preferred_ccy    TYPE waers
-                quantity         TYPE zscm_quantity
-                unit_price       TYPE zscm_unit_price
+      IMPORTING procurement_id    TYPE zscm_procurement_id
+                source_currency   TYPE waers
+                preferred_ccy     TYPE waers
+                quantity          TYPE zscm_quantity
+                unit_price        TYPE zscm_unit_price
       RETURNING VALUE(result_key) TYPE zr_scmproc-ProcurementUuid.
 
 
@@ -68,11 +67,23 @@ CLASS ltc_procurement IMPLEMENTATION.
 
 
   METHOD class_setup.
-
+    cds_environment = cl_cds_test_environment=>create( i_for_entity = 'ZR_SCMPROC' ).
+    api_double = NEW ltd_exchange_rate_api(  ).
+    lhc_zr_scmproc=>api_client = api_double.
   ENDMETHOD.
 
   METHOD class_teardown.
+    cds_environment->destroy(  ).
+  ENDMETHOD.
 
+  METHOD setup.
+    cds_environment->clear_doubles(  ).
+    api_double->should_fail = abap_false.
+    api_double->simulated_rate = '1.2'.  " 1 USD = 1.2 EUR (default)
+  ENDMETHOD.
+
+  METHOD teardown.
+    ROLLBACK ENTITIES.
   ENDMETHOD.
 
   METHOD create_test_procurement.
@@ -88,14 +99,6 @@ CLASS ltc_procurement IMPLEMENTATION.
   ENDMETHOD.
 
   METHOD determination_skip_empty_field.
-
-  ENDMETHOD.
-
-  METHOD setup.
-
-  ENDMETHOD.
-
-  METHOD teardown.
 
   ENDMETHOD.
 

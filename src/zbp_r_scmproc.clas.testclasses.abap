@@ -183,6 +183,25 @@ CLASS ltc_procurement IMPLEMENTATION.
 
   METHOD determination_skip_empty_field.
 
+    MODIFY ENTITIES OF zr_scmproc
+      ENTITY Procurement
+        CREATE FIELDS (  MaterialName Quantity UnitPrice )
+        WITH VALUE #( ( %cid            = 'SKIP_TEST'
+                        ProcurementId   = '03'
+                        MaterialName    = 'Test Material'
+                        Quantity        = '1'
+                        UnitPrice       = '50'
+                        " SourceCurrency and PreferredCurrency intentionally empty
+                      ) )
+      MAPPED   DATA(mapped)
+      FAILED   DATA(failed)
+      REPORTED DATA(reported).
+
+    " No failures expected from the determination itself
+    cl_abap_unit_assert=>assert_initial(
+      act = failed-Procurement
+      msg = 'Determination must not fail when currency fields are empty' ).
+
   ENDMETHOD.
 
   METHOD validation_rejects_zero_price.

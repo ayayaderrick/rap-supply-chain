@@ -261,7 +261,29 @@ CLASS ltc_procurement IMPLEMENTATION.
   ENDMETHOD.
 
   METHOD validation_reject_zero_quan.
+    MODIFY ENTITIES OF zr_scmproc
+      ENTITY Procurement
+        CREATE FIELDS (  MaterialName SourceCurrency PreferredCurrency
+                        Quantity UnitPrice )
+        WITH VALUE #( ( %cid              = 'ZERO_QTY'
+                        ProcurementId     = '05'
+                        MaterialName      = 'Steel Rod'
+                        SourceCurrency    = 'USD'
+                        PreferredCurrency = 'EUR'
+                        Quantity          = '0'     " invalid
+                        UnitPrice         = '25' ) )
+      MAPPED   DATA(mapped)
+      FAILED   DATA(failed_create)
+      REPORTED DATA(reported_create).
 
+    COMMIT ENTITIES
+      RESPONSE OF zr_scmproc
+      FAILED   DATA(failed_save)
+      REPORTED DATA(reported_save).
+
+    cl_abap_unit_assert=>assert_not_initial(
+      act = failed_save-Procurement
+      msg = 'Validation must reject zero quantity' ).
   ENDMETHOD.
 
 ENDCLASS.

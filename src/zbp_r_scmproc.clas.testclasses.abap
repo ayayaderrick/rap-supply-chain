@@ -154,6 +154,31 @@ CLASS ltc_procurement IMPLEMENTATION.
 
   METHOD determination_handle_api_error.
 
+    api_double->should_fail = abap_true.
+
+    DATA(uuid) = create_test_procurement(
+      procurement_id  = '02'
+      source_currency = 'USD'
+      preferred_ccy   = 'EUR'
+      quantity        = '5'
+      unit_price      = '200' ).
+
+    READ ENTITIES OF zr_scmproc IN LOCAL MODE
+      ENTITY Procurement
+        FIELDS ( TotalInPreferredCcy ExchangeRate ApiMessage )
+        WITH VALUE #( ( ProcurementUUID = uuid ) )
+      RESULT DATA(results).
+
+    DATA(row) = results[ 1 ].
+    cl_abap_unit_assert=>assert_equals(
+      exp = CONV zscm_total_in_preferred_ccy( '0' )
+      act = row-TotalInPreferredCcy
+      msg = 'Total must be 0 when API fails' ).
+
+    cl_abap_unit_assert=>assert_not_initial(
+      act = row-ApiMessage
+      msg = 'ApiMessage must contain the error description' ).
+
   ENDMETHOD.
 
   METHOD determination_skip_empty_field.

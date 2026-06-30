@@ -47,7 +47,9 @@ CLASS ltc_procurement DEFINITION FINAL FOR TESTING
       "! Check quantity field is not zero
       validation_reject_zero_quan      FOR TESTING,
       "! Check price field is not zero
-      validation_rejects_zero_price    FOR TESTING.
+      validation_rejects_zero_price    FOR TESTING,
+      "! Check fields are updated
+      action_updates_fields            FOR TESTING.
 
     " Helper: create a procurement record and return its UUID
     METHODS create_test_procurement
@@ -284,6 +286,60 @@ CLASS ltc_procurement IMPLEMENTATION.
     cl_abap_unit_assert=>assert_not_initial(
       act = failed_save-Procurement
       msg = 'Validation must reject zero quantity' ).
+  ENDMETHOD.
+
+  METHOD action_updates_fields.
+
+    api_double->simulated_rate = '1.5'.
+
+    DATA(uuid) = create_test_procurement(
+      procurement_id  = '10'
+      source_currency = 'USD'
+      preferred_ccy   = 'GBP'
+      quantity        = '20'
+      unit_price      = '50' ).
+
+    " Manually zero out ExchangeRate to simulate stale data
+    MODIFY ENTITIES OF zr_scmproc
+      ENTITY Procurement
+        UPDATE SET FIELDS
+        WITH VALUE #( ( ProcurementUUID = uuid
+                        ExchangeRate          = 0
+                        TotalInPreferredCcy   = 0
+                        ApiMessage            = 'old message' ) )
+      REPORTED DATA(reported_zero).
+
+    " Invoke the RefreshRate action
+    MODIFY ENTITIES OF zr_scmproc
+      ENTITY Procurement
+        EXECUTE RefreshRate
+          FROM VALUE #( ( ProcurementUuid = uuid ) )
+      RESULT   DATA(action_result)
+      REPORTED DATA(reported_action)
+      FAILED   DATA(failed_action).
+
+    cl_abap_unit_assert=>assert_initial(
+      act = failed_action-Procurement
+      msg = 'RefreshRate action must not fail for a valid procurement' ).
+
+    " Verify the entity was updated
+    READ ENTITIES OF zr_scmproc IN LOCAL MODE
+      ENTITY Procurement
+        FIELDS ( ExchangeRate TotalInPreferredCcy )
+        WITH VALUE #( ( ProcurementUUID = uuid ) )
+      RESULT DATA(lt_results).
+
+    DATA(ls_result) = lt_results[ 1 ].
+    cl_abap_unit_assert=>assert_equals(
+      exp = CONV zscm_exchange_rate( '1.5' )
+      act = ls_result-ExchangeRate
+      msg = 'ExchangeRate must be updated to the simulated rate' ).
+
+    cl_abap_unit_assert=>assert_equals(
+      exp = CONV zscm_total_in_preferred_ccy( '1500' )   " 20 × 50 × 1.5
+      act = ls_result-TotalInPreferredCcy
+      msg = 'Total must be Qty × Price × Rate = 20 × 50 × 1.5 = 1500' ).
+
   ENDMETHOD.
 
 ENDCLASS.

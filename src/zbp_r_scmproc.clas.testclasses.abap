@@ -234,6 +234,30 @@ CLASS ltc_procurement IMPLEMENTATION.
 
   METHOD validation_reject_same_curr.
 
+    MODIFY ENTITIES OF zr_scmproc
+      ENTITY Procurement
+        CREATE FIELDS (  MaterialName SourceCurrency PreferredCurrency
+                        Quantity UnitPrice )
+        WITH VALUE #( ( %cid               = 'SAME_CCY'
+                        ProcurementId      = '04'
+                        MaterialName       = 'Copper Wire'
+                        SourceCurrency     = 'USD'
+                        PreferredCurrency  = 'USD'    " same — must be rejected
+                        Quantity           = '10'
+                        UnitPrice          = '50' ) )
+      MAPPED   DATA(mapped)
+      FAILED   DATA(failed_create)
+      REPORTED DATA(reported_create).
+
+    COMMIT ENTITIES
+      RESPONSE OF zr_scmproc
+      FAILED   DATA(failed_save)
+      REPORTED DATA(reported_save).
+
+    cl_abap_unit_assert=>assert_not_initial(
+      act = failed_save-Procurement
+      msg = 'Validation must reject identical source and preferred currency' ).
+
   ENDMETHOD.
 
   METHOD validation_reject_zero_quan.

@@ -129,26 +129,26 @@ CLASS ltc_procurement IMPLEMENTATION.
         unit_price      = '100'
      ).
 
-     READ ENTITIES OF zr_scmproc in local mode
-     ENTITY Procurement
-     FIELDS ( TotalInPreferredCcy ExchangeRate ApiMessage )
-     WITH VALUE #( ( ProcurementUUID = uuid ) )
-     RESULT data(lt_results).
+    READ ENTITIES OF zr_scmproc IN LOCAL MODE
+    ENTITY Procurement
+    FIELDS ( TotalInPreferredCcy ExchangeRate ApiMessage )
+    WITH VALUE #( ( ProcurementUUID = uuid ) )
+    RESULT DATA(lt_results).
 
-     data(ls_result) = lt_results[ 1 ].
-     cl_abap_unit_assert=>assert_equals(
-     msg = 'Total should be Qty × Price × Rate = 10 × 100 × 1.2 = 1200'
-     exp = conv zscm_total_in_preferred_ccy( '1200' )
-     act = ls_result-TotalInPreferredCcy ).
+    DATA(ls_result) = lt_results[ 1 ].
+    cl_abap_unit_assert=>assert_equals(
+    msg = 'Total should be Qty × Price × Rate = 10 × 100 × 1.2 = 1200'
+    exp = CONV zscm_total_in_preferred_ccy( '1200' )
+    act = ls_result-TotalInPreferredCcy ).
 
-     cl_abap_unit_assert=>assert_equals(
-     msg = 'ExchangeRate should reflect the simulated rate'
-     exp = conv zscm_exchange_rate( '1.2' )
-     act = ls_result-ExchangeRate ).
+    cl_abap_unit_assert=>assert_equals(
+    msg = 'ExchangeRate should reflect the simulated rate'
+    exp = CONV zscm_exchange_rate( '1.2' )
+    act = ls_result-ExchangeRate ).
 
-     cl_abap_unit_assert=>assert_not_initial(
-     msg = 'ApiMessage should contain the rate description'
-     act = ls_result-ApiMessage ).
+    cl_abap_unit_assert=>assert_not_initial(
+    msg = 'ApiMessage should contain the rate description'
+    act = ls_result-ApiMessage ).
 
   ENDMETHOD.
 
@@ -205,6 +205,30 @@ CLASS ltc_procurement IMPLEMENTATION.
   ENDMETHOD.
 
   METHOD validation_rejects_zero_price.
+
+    MODIFY ENTITIES OF zr_scmproc
+     ENTITY Procurement
+       CREATE FIELDS ( MaterialName SourceCurrency PreferredCurrency
+                       Quantity UnitPrice )
+       WITH VALUE #( ( %cid              = 'ZERO_PRICE'
+                       ProcurementId     = '06'
+                       MaterialName      = 'Aluminium Sheet'
+                       SourceCurrency    = 'EUR'
+                       PreferredCurrency = 'GBP'
+                       Quantity          = '5'
+                       UnitPrice         = '0' ) )   " invalid
+     MAPPED   DATA(mapped)
+     FAILED   DATA(failed_create)
+     REPORTED DATA(reported_create).
+
+    COMMIT ENTITIES
+      RESPONSE OF zr_scmproc
+      FAILED   DATA(failed_save)
+      REPORTED DATA(reported_save).
+
+    cl_abap_unit_assert=>assert_not_initial(
+      act = failed_save-Procurement
+      msg = 'Validation must reject zero unit price' ).
 
   ENDMETHOD.
 

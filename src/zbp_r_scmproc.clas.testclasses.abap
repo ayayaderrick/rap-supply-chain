@@ -51,7 +51,9 @@ CLASS ltc_procurement DEFINITION FINAL FOR TESTING
       "! Check fields are updated
       action_updates_fields            FOR TESTING,
       "! Check for api error message
-      action_fails_on_error            FOR TESTING.
+      action_fails_on_error            FOR TESTING,
+      "! Check locked fields on action
+      approve_action_locks_fields         FOR TESTING.
 
     " Helper: create a procurement record and return its UUID
     METHODS create_test_procurement
@@ -370,6 +372,44 @@ CLASS ltc_procurement IMPLEMENTATION.
     cl_abap_unit_assert=>assert_not_initial(
       act = reported_action-Procurement
       msg = 'A user-visible error message must be reported' ).
+
+  ENDMETHOD.
+
+  METHOD approve_action_locks_fields.
+
+    api_double->simulated_rate = '1.2'.
+
+  DATA(uuid) = create_test_procurement(
+    procurement_id  = '012'
+    source_currency = 'USD'
+    preferred_ccy   = 'EUR'
+    quantity        = '5'
+    unit_price      = '200' ).
+
+  " Approve the procurement
+  MODIFY ENTITIES OF zr_scmproc
+    ENTITY Procurement
+      EXECUTE Approve
+        FROM VALUE #( ( ProcurementUUID = uuid ) )
+    RESULT   DATA(action_result)
+    REPORTED DATA(reported_action)
+    FAILED   DATA(failed_action).
+
+  cl_abap_unit_assert=>assert_initial(
+    act = failed_action-Procurement
+    msg = 'Approve action must succeed when a valid rate is present' ).
+
+  " Verify status changed to Approved
+  READ ENTITIES OF zr_scmproc IN LOCAL MODE
+    ENTITY Procurement
+      FIELDS ( OverallStatus )
+      WITH VALUE #( ( ProcurementUUID = uuid ) )
+    RESULT DATA(results).
+
+  cl_abap_unit_assert=>assert_equals(
+    exp = lsc_procurement_status=>approved
+    act = results[ 1 ]-OverallStatus
+    msg = 'OverallStatus must be Approved after the Approve action' ).
 
   ENDMETHOD.
 

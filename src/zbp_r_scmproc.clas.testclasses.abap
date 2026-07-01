@@ -52,12 +52,14 @@ CLASS ltc_procurement DEFINITION FINAL FOR TESTING
       action_updates_fields               FOR TESTING,
       "! Check for api error message
       action_fails_on_error               FOR TESTING,
-      "! Check locked fields on action
+      "! Check status change on action
       approve_action_changes_status         FOR TESTING,
       "! Check action disabled without rate
       approve_action_blocked_wo_rate      FOR TESTING,
       "! Check new instance has status 'Open'
-      feature_ctrl_open_enables_edit      FOR TESTING.
+      feature_ctrl_open_enables_edit      FOR TESTING,
+      "! Check approve action disables editing
+      ft_ctrl_approved_locks_fields for testing.
 
     " Helper: create a procurement record and return its UUID
     METHODS create_test_procurement
@@ -469,6 +471,52 @@ CLASS ltc_procurement IMPLEMENTATION.
                     OR results[ 1 ]-OverallStatus IS INITIAL
                   THEN abap_true ELSE abap_false )
       msg = 'Newly created procurement must have Open or initial status' ).
+
+  ENDMETHOD.
+
+  METHOD ft_ctrl_approved_locks_fields.
+
+    api_double->simulated_rate = '1.1'.
+
+  DATA(uuid) = create_test_procurement(
+    procurement_id  = '15'
+    source_currency = 'USD'
+    preferred_ccy   = 'EUR'
+    quantity        = '2'
+    unit_price      = '50' ).
+
+  " Approve it
+  MODIFY ENTITIES OF zr_scmproc
+    ENTITY Procurement
+      EXECUTE Approve
+        FROM VALUE #( ( ProcurementUUID = uuid ) )
+    RESULT   DATA(action_result)
+    FAILED   DATA(failed_action)
+    REPORTED DATA(reported_action).
+
+  cl_abap_unit_assert=>assert_initial(
+    act = failed_action-Procurement
+    msg = 'Approve must succeed' ).
+
+  " Attempt to update UnitPrice after approval — should still be rejected
+  " (the validation on save will catch it; feature control prevents UI entry)
+  MODIFY ENTITIES OF zr_scmproc
+    ENTITY Procurement
+      UPDATE set FIELDS
+      WITH VALUE #( ( ProcurementUUID = uuid  OverallStatus = lsc_procurement_status=>open ) )
+    REPORTED DATA(reported_reopen).
+
+  READ ENTITIES OF zr_scmproc IN LOCAL MODE
+    ENTITY Procurement
+      FIELDS ( OverallStatus )
+      WITH VALUE #( ( ProcurementUUID = uuid ) )
+    RESULT DATA(results).
+
+  " OverallStatus is readonly in BDEF — the MODIFY above is silently ignored
+  cl_abap_unit_assert=>assert_equals(
+    exp = lsc_procurement_status=>approved
+    act = results[ 1 ]-OverallStatus
+    msg = 'Approved status must be immutable (field is readonly in BDEF)' ).
 
   ENDMETHOD.
 

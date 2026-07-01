@@ -53,7 +53,7 @@ CLASS ltc_procurement DEFINITION FINAL FOR TESTING
       "! Check for api error message
       action_fails_on_error               FOR TESTING,
       "! Check locked fields on action
-      approve_action_locks_fields         FOR TESTING,
+      approve_action_changes_status         FOR TESTING,
       "! Check action disabled without rate
       approve_action_blocked_wo_rate      FOR TESTING,
       "! Check new instance has status 'Open'
@@ -379,7 +379,7 @@ CLASS ltc_procurement IMPLEMENTATION.
 
   ENDMETHOD.
 
-  METHOD approve_action_locks_fields.
+  METHOD approve_action_changes_status.
 
     api_double->simulated_rate = '1.2'.
 

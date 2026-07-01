@@ -37,23 +37,25 @@ CLASS ltc_procurement DEFINITION FINAL FOR TESTING
       teardown,
 
       "! Check total of order instance
-      determination_calculate_total    FOR TESTING,
+      determination_calculate_total       FOR TESTING,
       "! Check returned API message in case of api error
-      determination_handle_api_error   FOR TESTING,
+      determination_handle_api_error      FOR TESTING,
       "! Check empty currency field
-      determination_skip_empty_field   FOR TESTING,
+      determination_skip_empty_field      FOR TESTING,
       "! Check source and target currency are not same
-      validation_reject_same_curr      FOR TESTING,
+      validation_reject_same_curr         FOR TESTING,
       "! Check quantity field is not zero
-      validation_reject_zero_quan      FOR TESTING,
+      validation_reject_zero_quan         FOR TESTING,
       "! Check price field is not zero
-      validation_rejects_zero_price    FOR TESTING,
+      validation_rejects_zero_price       FOR TESTING,
       "! Check fields are updated
-      action_updates_fields            FOR TESTING,
+      action_updates_fields               FOR TESTING,
       "! Check for api error message
-      action_fails_on_error            FOR TESTING,
+      action_fails_on_error               FOR TESTING,
       "! Check locked fields on action
-      approve_action_locks_fields         FOR TESTING.
+      approve_action_locks_fields         FOR TESTING,
+      "! Check action disabled without rate
+      approve_action_blocked_wo_rate      FOR TESTING.
 
     " Helper: create a procurement record and return its UUID
     METHODS create_test_procurement
@@ -379,37 +381,67 @@ CLASS ltc_procurement IMPLEMENTATION.
 
     api_double->simulated_rate = '1.2'.
 
-  DATA(uuid) = create_test_procurement(
-    procurement_id  = '012'
-    source_currency = 'USD'
-    preferred_ccy   = 'EUR'
-    quantity        = '5'
-    unit_price      = '200' ).
+    DATA(uuid) = create_test_procurement(
+      procurement_id  = '012'
+      source_currency = 'USD'
+      preferred_ccy   = 'EUR'
+      quantity        = '5'
+      unit_price      = '200' ).
 
-  " Approve the procurement
-  MODIFY ENTITIES OF zr_scmproc
-    ENTITY Procurement
-      EXECUTE Approve
-        FROM VALUE #( ( ProcurementUUID = uuid ) )
-    RESULT   DATA(action_result)
-    REPORTED DATA(reported_action)
-    FAILED   DATA(failed_action).
+    " Approve the procurement
+    MODIFY ENTITIES OF zr_scmproc
+      ENTITY Procurement
+        EXECUTE Approve
+          FROM VALUE #( ( ProcurementUUID = uuid ) )
+      RESULT   DATA(action_result)
+      REPORTED DATA(reported_action)
+      FAILED   DATA(failed_action).
 
-  cl_abap_unit_assert=>assert_initial(
-    act = failed_action-Procurement
-    msg = 'Approve action must succeed when a valid rate is present' ).
+    cl_abap_unit_assert=>assert_initial(
+      act = failed_action-Procurement
+      msg = 'Approve action must succeed when a valid rate is present' ).
 
-  " Verify status changed to Approved
-  READ ENTITIES OF zr_scmproc IN LOCAL MODE
-    ENTITY Procurement
-      FIELDS ( OverallStatus )
-      WITH VALUE #( ( ProcurementUUID = uuid ) )
-    RESULT DATA(results).
+    " Verify status changed to Approved
+    READ ENTITIES OF zr_scmproc IN LOCAL MODE
+      ENTITY Procurement
+        FIELDS ( OverallStatus )
+        WITH VALUE #( ( ProcurementUUID = uuid ) )
+      RESULT DATA(results).
 
-  cl_abap_unit_assert=>assert_equals(
-    exp = lsc_procurement_status=>approved
-    act = results[ 1 ]-OverallStatus
-    msg = 'OverallStatus must be Approved after the Approve action' ).
+    cl_abap_unit_assert=>assert_equals(
+      exp = lsc_procurement_status=>approved
+      act = results[ 1 ]-OverallStatus
+      msg = 'OverallStatus must be Approved after the Approve action' ).
+
+  ENDMETHOD.
+
+  METHOD approve_action_blocked_wo_rate.
+
+    " Create a procurement but set ExchangeRate to 0 explicitly
+    DATA(uuid) = create_test_procurement(
+      procurement_id  = '013'
+      source_currency = 'USD'
+      preferred_ccy   = 'EUR'
+      quantity        = '5'
+      unit_price      = '100' ).
+
+    MODIFY ENTITIES OF zr_scmproc
+      ENTITY Procurement
+        UPDATE SET FIELDS
+        WITH VALUE #( ( ProcurementUuid = uuid  ExchangeRate = 0 ) )
+      REPORTED DATA(reported_zero).
+
+    MODIFY ENTITIES OF zr_scmproc
+      ENTITY Procurement
+        EXECUTE Approve
+          FROM VALUE #( ( ProcurementUuid = uuid ) )
+      RESULT   DATA(action_result)
+      REPORTED DATA(reported_action)
+      FAILED   DATA(failed_action).
+
+    cl_abap_unit_assert=>assert_not_initial(
+      act = failed_action-Procurement
+      msg = 'Approve must be rejected when no exchange rate has been fetched' ).
 
   ENDMETHOD.
 

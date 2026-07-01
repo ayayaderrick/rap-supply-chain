@@ -37,29 +37,29 @@ CLASS ltc_procurement DEFINITION FINAL FOR TESTING
       teardown,
 
       "! Check total of order instance
-      determination_calculate_total       FOR TESTING,
+      determination_calculate_total         FOR TESTING,
       "! Check returned API message in case of api error
-      determination_handle_api_error      FOR TESTING,
+      determination_handle_api_error        FOR TESTING,
       "! Check empty currency field
-      determination_skip_empty_field      FOR TESTING,
+      determination_skip_empty_field        FOR TESTING,
       "! Check source and target currency are not same
-      validation_reject_same_curr         FOR TESTING,
+      validation_reject_same_curr           FOR TESTING,
       "! Check quantity field is not zero
-      validation_reject_zero_quan         FOR TESTING,
+      validation_reject_zero_quan           FOR TESTING,
       "! Check price field is not zero
-      validation_rejects_zero_price       FOR TESTING,
+      validation_rejects_zero_price         FOR TESTING,
       "! Check fields are updated
-      action_updates_fields               FOR TESTING,
+      action_updates_fields                 FOR TESTING,
       "! Check for api error message
-      action_fails_on_error               FOR TESTING,
+      action_fails_on_error                 FOR TESTING,
       "! Check status change on action
       approve_action_changes_status         FOR TESTING,
       "! Check action disabled without rate
-      approve_action_blocked_wo_rate      FOR TESTING,
+      approve_action_blocked_wo_rate        FOR TESTING,
       "! Check new instance has status 'Open'
-      feature_ctrl_open_enables_edit      FOR TESTING,
+      feature_ctrl_open_enables_edit        FOR TESTING,
       "! Check approve action disables editing
-      ft_ctrl_approved_locks_fields for testing.
+      ft_ctrl_approved_locks_fields         FOR TESTING.
 
     " Helper: create a procurement record and return its UUID
     METHODS create_test_procurement
@@ -104,7 +104,7 @@ CLASS ltc_procurement IMPLEMENTATION.
   "──────────────────────────────────────────────────────────────────────────
   METHOD create_test_procurement.
 
-    MODIFY ENTITIES OF zr_scmproc
+    MODIFY ENTITIES OF zr_scmproc IN LOCAL MODE
     ENTITY Procurement
     CREATE FIELDS ( MaterialName SourceCurrency PreferredCurrency
                         Quantity UnitPrice )
@@ -195,7 +195,7 @@ CLASS ltc_procurement IMPLEMENTATION.
 
   METHOD determination_skip_empty_field.
 
-    MODIFY ENTITIES OF zr_scmproc
+    MODIFY ENTITIES OF zr_scmproc IN LOCAL MODE
       ENTITY Procurement
         CREATE FIELDS (  MaterialName Quantity UnitPrice )
         WITH VALUE #( ( %cid            = 'SKIP_TEST'
@@ -218,7 +218,7 @@ CLASS ltc_procurement IMPLEMENTATION.
 
   METHOD validation_rejects_zero_price.
 
-    MODIFY ENTITIES OF zr_scmproc
+    MODIFY ENTITIES OF zr_scmproc IN LOCAL MODE
      ENTITY Procurement
        CREATE FIELDS ( MaterialName SourceCurrency PreferredCurrency
                        Quantity UnitPrice )
@@ -246,7 +246,7 @@ CLASS ltc_procurement IMPLEMENTATION.
 
   METHOD validation_reject_same_curr.
 
-    MODIFY ENTITIES OF zr_scmproc
+    MODIFY ENTITIES OF zr_scmproc IN LOCAL MODE
       ENTITY Procurement
         CREATE FIELDS (  MaterialName SourceCurrency PreferredCurrency
                         Quantity UnitPrice )
@@ -273,7 +273,7 @@ CLASS ltc_procurement IMPLEMENTATION.
   ENDMETHOD.
 
   METHOD validation_reject_zero_quan.
-    MODIFY ENTITIES OF zr_scmproc
+    MODIFY ENTITIES OF zr_scmproc IN LOCAL MODE
       ENTITY Procurement
         CREATE FIELDS (  MaterialName SourceCurrency PreferredCurrency
                         Quantity UnitPrice )
@@ -310,9 +310,9 @@ CLASS ltc_procurement IMPLEMENTATION.
       unit_price      = '50' ).
 
     " Manually zero out ExchangeRate to simulate stale data
-    MODIFY ENTITIES OF zr_scmproc
+    MODIFY ENTITIES OF zr_scmproc IN LOCAL MODE
       ENTITY Procurement
-        UPDATE SET FIELDS
+        UPDATE FIELDS ( ExchangeRate TotalInPreferredCcy ApiMessage )
         WITH VALUE #( ( ProcurementUUID = uuid
                         ExchangeRate          = 0
                         TotalInPreferredCcy   = 0
@@ -320,7 +320,7 @@ CLASS ltc_procurement IMPLEMENTATION.
       REPORTED DATA(reported_zero).
 
     " Invoke the RefreshRate action
-    MODIFY ENTITIES OF zr_scmproc
+    MODIFY ENTITIES OF zr_scmproc IN LOCAL MODE
       ENTITY Procurement
         EXECUTE RefreshRate
           FROM VALUE #( ( ProcurementUuid = uuid ) )
@@ -363,7 +363,7 @@ CLASS ltc_procurement IMPLEMENTATION.
       quantity        = '10'
       unit_price      = '100' ).
 
-    MODIFY ENTITIES OF zr_scmproc
+    MODIFY ENTITIES OF zr_scmproc IN LOCAL MODE
       ENTITY Procurement
         EXECUTE RefreshRate
           FROM VALUE #( ( ProcurementUUID = uuid ) )
@@ -393,7 +393,7 @@ CLASS ltc_procurement IMPLEMENTATION.
       unit_price      = '200' ).
 
     " Approve the procurement
-    MODIFY ENTITIES OF zr_scmproc
+    MODIFY ENTITIES OF zr_scmproc IN LOCAL MODE
       ENTITY Procurement
         EXECUTE Approve
           FROM VALUE #( ( ProcurementUUID = uuid ) )
@@ -429,13 +429,13 @@ CLASS ltc_procurement IMPLEMENTATION.
       quantity        = '5'
       unit_price      = '100' ).
 
-    MODIFY ENTITIES OF zr_scmproc
+    MODIFY ENTITIES OF zr_scmproc IN LOCAL MODE
       ENTITY Procurement
-        UPDATE SET FIELDS
+        UPDATE FIELDS ( ExchangeRate )
         WITH VALUE #( ( ProcurementUuid = uuid  ExchangeRate = 0 ) )
       REPORTED DATA(reported_zero).
 
-    MODIFY ENTITIES OF zr_scmproc
+    MODIFY ENTITIES OF zr_scmproc IN LOCAL MODE
       ENTITY Procurement
         EXECUTE Approve
           FROM VALUE #( ( ProcurementUuid = uuid ) )
@@ -478,45 +478,45 @@ CLASS ltc_procurement IMPLEMENTATION.
 
     api_double->simulated_rate = '1.1'.
 
-  DATA(uuid) = create_test_procurement(
-    procurement_id  = '15'
-    source_currency = 'USD'
-    preferred_ccy   = 'EUR'
-    quantity        = '2'
-    unit_price      = '50' ).
+    DATA(uuid) = create_test_procurement(
+      procurement_id  = '15'
+      source_currency = 'USD'
+      preferred_ccy   = 'EUR'
+      quantity        = '2'
+      unit_price      = '50' ).
 
-  " Approve it
-  MODIFY ENTITIES OF zr_scmproc
-    ENTITY Procurement
-      EXECUTE Approve
-        FROM VALUE #( ( ProcurementUUID = uuid ) )
-    RESULT   DATA(action_result)
-    FAILED   DATA(failed_action)
-    REPORTED DATA(reported_action).
+    " Approve it
+    MODIFY ENTITIES OF zr_scmproc IN LOCAL MODE
+      ENTITY Procurement
+        EXECUTE Approve
+          FROM VALUE #( ( ProcurementUUID = uuid ) )
+      RESULT   DATA(action_result)
+      FAILED   DATA(failed_action)
+      REPORTED DATA(reported_action).
 
-  cl_abap_unit_assert=>assert_initial(
-    act = failed_action-Procurement
-    msg = 'Approve must succeed' ).
+    cl_abap_unit_assert=>assert_initial(
+      act = failed_action-Procurement
+      msg = 'Approve must succeed' ).
 
-  " Attempt to update UnitPrice after approval — should still be rejected
-  " (the validation on save will catch it; feature control prevents UI entry)
-  MODIFY ENTITIES OF zr_scmproc
-    ENTITY Procurement
-      UPDATE set FIELDS
-      WITH VALUE #( ( ProcurementUUID = uuid  OverallStatus = lsc_procurement_status=>open ) )
-    REPORTED DATA(reported_reopen).
+    " Attempt to update UnitPrice after approval — should still be rejected
+    " (the validation on save will catch it; feature control prevents UI entry)
+    MODIFY ENTITIES OF zr_scmproc IN LOCAL MODE
+      ENTITY Procurement
+        UPDATE FIELDS ( OverallStatus )
+        WITH VALUE #( ( ProcurementUUID = uuid  OverallStatus = lsc_procurement_status=>open ) )
+      REPORTED DATA(reported_reopen).
 
-  READ ENTITIES OF zr_scmproc IN LOCAL MODE
-    ENTITY Procurement
-      FIELDS ( OverallStatus )
-      WITH VALUE #( ( ProcurementUUID = uuid ) )
-    RESULT DATA(results).
+    READ ENTITIES OF zr_scmproc IN LOCAL MODE
+      ENTITY Procurement
+        FIELDS ( OverallStatus )
+        WITH VALUE #( ( ProcurementUUID = uuid ) )
+      RESULT DATA(results).
 
-  " OverallStatus is readonly in BDEF — the MODIFY above is silently ignored
-  cl_abap_unit_assert=>assert_equals(
-    exp = lsc_procurement_status=>approved
-    act = results[ 1 ]-OverallStatus
-    msg = 'Approved status must be immutable (field is readonly in BDEF)' ).
+    " OverallStatus is readonly in BDEF — the MODIFY above is silently ignored
+    cl_abap_unit_assert=>assert_equals(
+      exp = lsc_procurement_status=>approved
+      act = results[ 1 ]-OverallStatus
+      msg = 'Approved status must be immutable (field is readonly in BDEF)' ).
 
   ENDMETHOD.
 

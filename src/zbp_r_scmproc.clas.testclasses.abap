@@ -49,7 +49,9 @@ CLASS ltc_procurement DEFINITION FINAL FOR TESTING
       "! Check price field is not zero
       validation_rejects_zero_price    FOR TESTING,
       "! Check fields are updated
-      action_updates_fields            FOR TESTING.
+      action_updates_fields            FOR TESTING,
+      "! Check for api error message
+      action_fails_on_error            FOR TESTING.
 
     " Helper: create a procurement record and return its UUID
     METHODS create_test_procurement
@@ -339,6 +341,35 @@ CLASS ltc_procurement IMPLEMENTATION.
       exp = CONV zscm_total_in_preferred_ccy( '1500' )   " 20 × 50 × 1.5
       act = ls_result-TotalInPreferredCcy
       msg = 'Total must be Qty × Price × Rate = 20 × 50 × 1.5 = 1500' ).
+
+  ENDMETHOD.
+
+  METHOD action_fails_on_error.
+
+    api_double->should_fail = abap_true.
+
+    DATA(uuid) = create_test_procurement(
+      procurement_id  = '011'
+      source_currency = 'EUR'
+      preferred_ccy   = 'JPY'
+      quantity        = '10'
+      unit_price      = '100' ).
+
+    MODIFY ENTITIES OF zr_scmproc
+      ENTITY Procurement
+        EXECUTE RefreshRate
+          FROM VALUE #( ( ProcurementUUID = uuid ) )
+      RESULT   DATA(action_result)
+      REPORTED DATA(reported_action)
+      FAILED   DATA(failed_action).
+
+    cl_abap_unit_assert=>assert_not_initial(
+      act = failed_action-Procurement
+      msg = 'RefreshRate must fail and surface error when API is unavailable' ).
+
+    cl_abap_unit_assert=>assert_not_initial(
+      act = reported_action-Procurement
+      msg = 'A user-visible error message must be reported' ).
 
   ENDMETHOD.
 

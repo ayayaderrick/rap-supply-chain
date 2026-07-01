@@ -496,27 +496,36 @@ CLASS ltc_procurement IMPLEMENTATION.
 
     cl_abap_unit_assert=>assert_initial(
       act = failed_action-Procurement
-      msg = 'Approve must succeed' ).
+      msg = 'First Approve call must succeed' ).
 
-    " Attempt to update UnitPrice after approval — should still be rejected
-    " (the validation on save will catch it; feature control prevents UI entry)
-    MODIFY ENTITIES OF zr_scmproc IN LOCAL MODE
-      ENTITY Procurement
-        UPDATE FIELDS ( OverallStatus )
-        WITH VALUE #( ( ProcurementUUID = uuid  OverallStatus = lsc_procurement_status=>open ) )
-      REPORTED DATA(reported_reopen).
-
-    READ ENTITIES OF zr_scmproc IN LOCAL MODE
+    " Step 2: Verify OverallStatus is now Approved
+    READ ENTITIES OF zr_scmproc
       ENTITY Procurement
         FIELDS ( OverallStatus )
         WITH VALUE #( ( ProcurementUUID = uuid ) )
-      RESULT DATA(results).
+      RESULT DATA(results)
+      FAILED DATA(failed_read).
 
-    " OverallStatus is readonly in BDEF — the MODIFY above is silently ignored
     cl_abap_unit_assert=>assert_equals(
       exp = lsc_procurement_status=>approved
       act = results[ 1 ]-OverallStatus
-      msg = 'Approved status must be immutable (field is readonly in BDEF)' ).
+      msg = 'OverallStatus must be Approved after the Approve action' ).
+
+    " Step 3: Attempt to Approve again — get_instance_features returns
+    " fc-o-disabled for an already-approved record, so the RAP runtime
+    " rejects this call.
+    MODIFY ENTITIES OF zr_scmproc
+    ENTITY Procurement
+     EXECUTE Approve
+       FROM VALUE #( ( ProcurementUUID = uuid ) )
+    RESULT   DATA(result_second)
+    FAILED   DATA(failed_second)
+    REPORTED DATA(reported_second).
+
+    cl_abap_unit_assert=>assert_not_initial(
+      act = failed_second-Procurement
+      msg = 'Second Approve call must be rejected — action is disabled for Approved records' ).
+
 
   ENDMETHOD.
 

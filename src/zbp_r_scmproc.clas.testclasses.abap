@@ -55,7 +55,9 @@ CLASS ltc_procurement DEFINITION FINAL FOR TESTING
       "! Check locked fields on action
       approve_action_locks_fields         FOR TESTING,
       "! Check action disabled without rate
-      approve_action_blocked_wo_rate      FOR TESTING.
+      approve_action_blocked_wo_rate      FOR TESTING,
+      "! Check new instance has status 'Open'
+      feature_ctrl_open_enables_edit      FOR TESTING.
 
     " Helper: create a procurement record and return its UUID
     METHODS create_test_procurement
@@ -442,6 +444,31 @@ CLASS ltc_procurement IMPLEMENTATION.
     cl_abap_unit_assert=>assert_not_initial(
       act = failed_action-Procurement
       msg = 'Approve must be rejected when no exchange rate has been fetched' ).
+
+  ENDMETHOD.
+
+  METHOD feature_ctrl_open_enables_edit.
+
+    DATA(uuid) = create_test_procurement(
+    procurement_id  = '014'
+    source_currency = 'USD'
+    preferred_ccy   = 'EUR'
+    quantity        = '1'
+    unit_price      = '10' ).
+
+    READ ENTITIES OF zr_scmproc IN LOCAL MODE
+      ENTITY Procurement
+        FIELDS ( OverallStatus )
+        WITH VALUE #( ( ProcurementUUID = uuid ) )
+      RESULT DATA(results).
+
+    " Status should be Open (initial = Open in our model)
+    cl_abap_unit_assert=>assert_true(
+      act = COND abap_bool(
+                  WHEN results[ 1 ]-OverallStatus = lsc_procurement_status=>open
+                    OR results[ 1 ]-OverallStatus IS INITIAL
+                  THEN abap_true ELSE abap_false )
+      msg = 'Newly created procurement must have Open or initial status' ).
 
   ENDMETHOD.
 

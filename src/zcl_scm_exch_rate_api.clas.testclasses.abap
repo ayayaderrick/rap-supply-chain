@@ -43,7 +43,12 @@ ENDCLASS.
 
 CLASS ltc_exch_rate_api  IMPLEMENTATION.
 
+  METHOD setup.
 
+    " FRIENDS allows direct instantiation of the private constructor
+    cut = new zcl_scm_exch_rate_api(  ).
+
+  ENDMETHOD.
 
   METHOD missing_rates_block_raises.
 
@@ -74,10 +79,6 @@ CLASS ltc_exch_rate_api  IMPLEMENTATION.
   ENDMETHOD.
 
   METHOD same_currency_returns_one.
-
-  ENDMETHOD.
-
-  METHOD setup.
 
   ENDMETHOD.
 

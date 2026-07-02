@@ -46,8 +46,15 @@ CLASS ltc_exch_rate_api  IMPLEMENTATION.
   METHOD setup.
 
     " FRIENDS allows direct instantiation of the private constructor
-    cut = new zcl_scm_exch_rate_api(  ).
+    cut = NEW zcl_scm_exch_rate_api(  ).
 
+  ENDMETHOD.
+
+  " Delegate to the private method via FRIENDS
+  METHOD parse_json.
+    result = cut->extract_rate_from_json(
+        json_body = json_body
+        target_currency = target_currency ).
   ENDMETHOD.
 
   METHOD missing_rates_block_raises.
@@ -63,10 +70,6 @@ CLASS ltc_exch_rate_api  IMPLEMENTATION.
   ENDMETHOD.
 
   METHOD parse_compact_json_gbp.
-
-  ENDMETHOD.
-
-  METHOD parse_json.
 
   ENDMETHOD.
 

@@ -1,3 +1,5 @@
+CLASS ltc_exch_rate_api DEFINITION DEFERRED.
+CLASS zcl_scm_exch_rate_api DEFINITION LOCAL FRIENDS ltc_exch_rate_api.
 CLASS ltc_exch_rate_api DEFINITION FINAL FOR TESTING
   DURATION SHORT
   RISK LEVEL HARMLESS.

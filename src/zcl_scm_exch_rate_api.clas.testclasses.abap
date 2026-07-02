@@ -1,19 +1,88 @@
 CLASS ltc_exch_rate_api DEFINITION DEFERRED.
 CLASS zcl_scm_exch_rate_api DEFINITION LOCAL FRIENDS ltc_exch_rate_api.
+
+"══════════════════════════════════════════════════════════════════════════════
+" Unit tests for zcl_scm_exch_rate_api
+" Focus: the JSON parsing logic in extract_rate_from_json.
+" HTTP calls are not exercised here (that would be an integration test).
+"══════════════════════════════════════════════════════════════════════════════
 CLASS ltc_exch_rate_api DEFINITION FINAL FOR TESTING
   DURATION SHORT
   RISK LEVEL HARMLESS.
 
   PRIVATE SECTION.
+    " Class under test — instantiated via FRIENDS access to private constructor
+    DATA cut TYPE REF TO zcl_scm_exch_rate_api.
     METHODS:
-      first_test FOR TESTING RAISING cx_static_check.
+      setup,
+      parse_compact_json_eur      FOR TESTING,
+      parse_compact_json_gbp      FOR TESTING,
+      parse_pretty_printed_json   FOR TESTING,
+      parse_rate_at_end_of_block  FOR TESTING,
+
+      " ── Same-currency short-circuit ────────────────────────────────────────
+      same_currency_returns_one   FOR TESTING,
+
+      " ── Error cases ────────────────────────────────────────────────────────
+      missing_rates_block_raises  FOR TESTING,
+      unknown_currency_raises     FOR TESTING,
+      non_numeric_value_raises    FOR TESTING.
+
+    " ── Helper: call private method via FRIENDS ────────────────────────────
+    METHODS parse_json
+      IMPORTING
+        json_body       TYPE string
+        target_currency TYPE waers
+      RETURNING
+        VALUE(result)   TYPE decfloat34
+      RAISING
+        zcx_scm_api_error.
+
 ENDCLASS.
 
 
 CLASS ltc_exch_rate_api  IMPLEMENTATION.
 
-  METHOD first_test.
-    cl_abap_unit_assert=>fail( 'Implement your first test here' ).
+
+
+  METHOD missing_rates_block_raises.
+
+  ENDMETHOD.
+
+  METHOD non_numeric_value_raises.
+
+  ENDMETHOD.
+
+  METHOD parse_compact_json_eur.
+
+  ENDMETHOD.
+
+  METHOD parse_compact_json_gbp.
+
+  ENDMETHOD.
+
+  METHOD parse_json.
+
+  ENDMETHOD.
+
+  METHOD parse_pretty_printed_json.
+
+  ENDMETHOD.
+
+  METHOD parse_rate_at_end_of_block.
+
+  ENDMETHOD.
+
+  METHOD same_currency_returns_one.
+
+  ENDMETHOD.
+
+  METHOD setup.
+
+  ENDMETHOD.
+
+  METHOD unknown_currency_raises.
+
   ENDMETHOD.
 
 ENDCLASS.

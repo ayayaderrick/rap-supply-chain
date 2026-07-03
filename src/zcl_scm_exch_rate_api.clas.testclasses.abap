@@ -24,7 +24,9 @@ CLASS ltc_exch_rate_api DEFINITION FINAL FOR TESTING
       parse_pretty_printed_json   FOR TESTING
         RAISING
           zcx_scm_api_error,
-      parse_rate_at_end_of_block  FOR TESTING,
+      parse_rate_at_end_of_block  FOR TESTING
+        RAISING
+          zcx_scm_api_error,
 
       " ── Same-currency short-circuit ────────────────────────────────────────
       same_currency_returns_one   FOR TESTING,
@@ -116,6 +118,16 @@ CLASS ltc_exch_rate_api  IMPLEMENTATION.
   ENDMETHOD.
 
   METHOD parse_rate_at_end_of_block.
+
+    CONSTANTS json TYPE string VALUE
+      `{"result":"success","base_code":"USD","rates":{"EUR":0.91,"ZAR":18.75}}`.
+
+    DATA(rate) = parse_json( json_body = json target_currency = 'ZAR' ).
+
+    cl_abap_unit_assert=>assert_equals(
+      exp = CONV decfloat34( '18.75' )
+      act = rate
+      msg = 'ZAR rate at end of rates block should be 18.75' ).
 
   ENDMETHOD.
 

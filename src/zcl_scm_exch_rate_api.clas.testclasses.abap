@@ -18,7 +18,9 @@ CLASS ltc_exch_rate_api DEFINITION FINAL FOR TESTING
       parse_compact_json_eur      FOR TESTING
         RAISING
           zcx_scm_api_error,
-      parse_compact_json_gbp      FOR TESTING,
+      parse_compact_json_gbp      FOR TESTING
+        RAISING
+          zcx_scm_api_error,
       parse_pretty_printed_json   FOR TESTING,
       parse_rate_at_end_of_block  FOR TESTING,
 
@@ -83,6 +85,17 @@ CLASS ltc_exch_rate_api  IMPLEMENTATION.
   ENDMETHOD.
 
   METHOD parse_compact_json_gbp.
+
+    CONSTANTS json TYPE string VALUE
+      `{"result":"success","base_code":"USD",` &
+      `"rates":{"AED":3.67,"EUR":0.91,"GBP":0.79,"JPY":150.23}}`.
+
+    DATA(rate) = parse_json( json_body = json target_currency = 'GBP' ).
+
+    cl_abap_unit_assert=>assert_equals(
+      exp = CONV decfloat34( '0.79' )
+      act = rate
+      msg = 'GBP rate from compact JSON should be 0.79' ).
 
   ENDMETHOD.
 

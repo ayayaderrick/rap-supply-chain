@@ -21,7 +21,7 @@ ENDCLASS.
 
 
 
-CLASS ZCL_SCM_EXCH_RATE_API IMPLEMENTATION.
+CLASS zcl_scm_exch_rate_api IMPLEMENTATION.
 
 
   METHOD create.
@@ -47,7 +47,7 @@ CLASS ZCL_SCM_EXCH_RATE_API IMPLEMENTATION.
 
         IF status-code <> 200.
           RAISE EXCEPTION NEW zcx_scm_api_error( error_message = |API returned HTTP { status-code } ({ status-reason }).|
-                                                                 && |Verify that currency code '{ source_currency }' is ISO 4217 compliant. |
+                                                                 & |Verify that currency code '{ source_currency }' is ISO 4217 compliant. |
                                                  http_status   = status-code
                                                  ).
         ENDIF.
@@ -60,7 +60,7 @@ CLASS ZCL_SCM_EXCH_RATE_API IMPLEMENTATION.
       CATCH cx_web_http_client_error INTO DATA(http_error).
         " Catches execution, communication, and protocol issues
         RAISE EXCEPTION NEW zcx_scm_api_error( error_message = |Cannot reach the exchange rate API: { http_error->get_text(  ) }.|
-                                                               && |Check that internet egress is allowed for this BTP subaccount.|
+                                                               & |Check that internet egress is allowed for this BTP subaccount.|
                                                previous      = http_error
                                                ).
       CATCH cx_http_dest_provider_error INTO DATA(dest_error).
@@ -74,54 +74,82 @@ CLASS ZCL_SCM_EXCH_RATE_API IMPLEMENTATION.
 
 
   METHOD extract_rate_from_json.
-    " Response shape: { "result":"success", "base_code":"USD",
-    "                   "rates": { "EUR":0.91, "GBP":0.79, ... } }
+    " ── Step 1: Locate the "rates" block ──────────────────────────────────
+    DATA(json_len) = strlen( json_body ).
 
-    " Strategy: locate the "rates":{...} block first to avoid false
-    " matches in the provider/documentation URL strings.
-    DATA(rates_block_pos) = find( val = json_body sub = `"rates":{` ).
-    IF rates_block_pos < 0.
-      rates_block_pos = find( val = json_body sub = `"rates":{` ).
+    DATA(rates_key_compact)  = `"rates":{`.
+    DATA(rates_key_spaced)   = `"rates": {`.
+
+    DATA(rates_pos) = find( val = json_body sub = rates_key_compact ).
+    DATA(rates_key_len) = strlen( rates_key_compact ).
+
+    IF rates_pos < 0.
+      rates_pos    = find( val = json_body sub = rates_key_spaced ).
+      rates_key_len = strlen( rates_key_spaced ).
     ENDIF.
 
-    IF rates_block_pos < 0.
-      RAISE EXCEPTION NEW zcx_scm_api_error( error_message = |Unexpected API response: "rates" object not found.|
-                                                             && |Raw snippet: { substring( val = json_body off = 0 len = 120 ) }|
-                                             ).
+    IF rates_pos < 0.
+      DATA(snippet_len) = COND i( WHEN json_len > 120 THEN 120 ELSE json_len ).
+      RAISE EXCEPTION NEW zcx_scm_api_error( error_message = |Unexpected API response: "rates" object not found. |
+                                                             & |Raw snippet: { substring( val = json_body off = 0 len = snippet_len ) }| ).
     ENDIF.
 
-    DATA(rates_section) = substring( val = json_body off = rates_block_pos ).
+    " Work only within the rates block from here on
+    DATA(rates_start) = rates_pos + rates_key_len.
+    DATA(rates_section) = substring( val = json_body off = rates_start ).
 
-    " Search for "TARGET": or "TARGET": (pretty-printed variant)
+    " ── Step 2: Locate the target currency key ────────────────────────────
     DATA(search_key) = |"{ target_currency }":|.
-    DATA(key_pos) = find( val = rates_section sub = search_key ).
+    DATA(key_pos)    = find( val = rates_section sub = search_key ).
+
     IF key_pos < 0.
+      " Try the pretty-printed variant with a space after the colon
       search_key = |"{ target_currency }": |.
       key_pos    = find( val = rates_section sub = search_key ).
     ENDIF.
 
     IF key_pos < 0.
       RAISE EXCEPTION NEW zcx_scm_api_error( error_message = |Currency '{ target_currency }' not found in the rates list. |
-                                                             && |Verify the ISO 4217 code is correct and supported by the API.| ).
+                                                             & |Verify the ISO 4217 code is correct and supported by the API.| ).
     ENDIF.
 
-    " Extract the numeric token after the colon
-    DATA(value_offset) = key_pos + strlen( search_key ).
-    DATA(value_fragment) = condense( substring( val = rates_section off = value_offset len = 30 ) ).
+    " ── Step 3: Extract the value token — bounds-safe ─────────────────────
+    DATA(value_start) = key_pos + strlen( search_key ).
+    DATA(remaining)   = strlen( rates_section ) - value_start.
+
+    IF remaining <= 0.
+      RAISE EXCEPTION NEW zcx_scm_api_error( error_message = |No value found after currency key '{ target_currency }' |
+                                                             & |in the rates block.| ).
+    ENDIF.
+
+    " Take only what is available — never assume 30 chars remain
+    DATA(extract_len) = COND i( WHEN remaining > 30 THEN 30 ELSE remaining ).
+    DATA(value_fragment) = condense(
+      substring( val = rates_section off = value_start len = extract_len ) ).
+
+    " ── Step 4: Clip at the first delimiter (, or }) ──────────────────────
     DATA(delim_pos) = find_any_of( val = value_fragment sub = `,}` ).
     DATA(rate_string) = COND string(
-        WHEN delim_pos > 0
-        THEN condense( substring( val = value_fragment off = 0 len = delim_pos ) )
-        ELSE condense( value_fragment )
-     ).
+      WHEN delim_pos > 0
+      THEN condense( substring( val = value_fragment off = 0 len = delim_pos ) )
+      ELSE condense( value_fragment ) ).
+
+    " Strip any surrounding whitespace or quotes left by pretty-printed JSON
+    rate_string = replace( val = rate_string sub = `"` with = `` occ = 0 ).
+    rate_string = condense( rate_string ).
+
+    " ── Step 5: Convert to numeric ────────────────────────────────────────
+    IF rate_string IS INITIAL.
+      RAISE EXCEPTION NEW zcx_scm_api_error( error_message = |Empty rate value extracted for '{ target_currency }'. |
+                                                             & |Check the API response format.| ).
+    ENDIF.
 
     TRY.
         result = CONV decfloat34( rate_string ).
       CATCH cx_sy_conversion_no_number INTO DATA(conv_error).
-        RAISE EXCEPTION NEW zcx_scm_api_error( error_message = |Cannot parse rate value '{ rate_string }' for { target_currency }.|
-                                               previous      = conv_error
-                                               ).
+        RAISE EXCEPTION NEW zcx_scm_api_error( error_message = |Cannot parse rate value '{ rate_string }' |
+                                                               & |for { target_currency } as a number.|
+                                               previous      = conv_error ).
     ENDTRY.
-
   ENDMETHOD.
 ENDCLASS.

@@ -29,7 +29,9 @@ CLASS ltc_exch_rate_api DEFINITION FINAL FOR TESTING
           zcx_scm_api_error,
 
       " ── Same-currency short-circuit ────────────────────────────────────────
-      same_currency_returns_one   FOR TESTING,
+      same_currency_returns_one   FOR TESTING
+        RAISING
+          zcx_scm_api_error,
 
       " ── Error cases ────────────────────────────────────────────────────────
       missing_rates_block_raises  FOR TESTING,
@@ -131,7 +133,19 @@ CLASS ltc_exch_rate_api  IMPLEMENTATION.
 
   ENDMETHOD.
 
+  "──────────────────────────────────────────────────────────────────────────
+  " Same source and target currency — must return 1 without any HTTP call
+  "──────────────────────────────────────────────────────────────────────────
   METHOD same_currency_returns_one.
+
+    DATA(rate) = cut->zif_scm_exch_rate_api~get_exchange_rate(
+      source_currency = 'USD'
+      target_currency = 'USD' ).
+
+    cl_abap_unit_assert=>assert_equals(
+      exp = CONV decfloat34( '1' )
+      act = rate
+      msg = 'Same currency must always return rate 1 without an API call' ).
 
   ENDMETHOD.
 

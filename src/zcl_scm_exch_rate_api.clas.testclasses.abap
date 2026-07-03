@@ -67,7 +67,23 @@ CLASS ltc_exch_rate_api  IMPLEMENTATION.
         target_currency = target_currency ).
   ENDMETHOD.
 
+  "──────────────────────────────────────────────────────────────────────────
+  " Missing "rates" object → zcx_scm_api_error must be raised
+  "──────────────────────────────────────────────────────────────────────────
   METHOD missing_rates_block_raises.
+
+    CONSTANTS json TYPE string VALUE
+      `{"result":"success","base_code":"USD","data":{"EUR":0.91}}`.
+
+    TRY.
+        parse_json( json_body = json target_currency = 'EUR' ).
+        cl_abap_unit_assert=>fail(
+          msg = 'Expected zcx_scm_api_error for missing rates block' ).
+      CATCH zcx_scm_api_error INTO DATA(api_error).
+        cl_abap_unit_assert=>assert_not_initial(
+          act = api_error->error_message
+          msg = 'Error message must not be empty' ).
+    ENDTRY.
 
   ENDMETHOD.
 

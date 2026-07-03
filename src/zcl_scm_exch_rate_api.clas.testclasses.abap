@@ -87,7 +87,23 @@ CLASS ltc_exch_rate_api  IMPLEMENTATION.
 
   ENDMETHOD.
 
+  "──────────────────────────────────────────────────────────────────────────
+  " Non-numeric rate value → zcx_scm_api_error (conversion error)
+  "──────────────────────────────────────────────────────────────────────────
   METHOD non_numeric_value_raises.
+
+    CONSTANTS json TYPE string VALUE
+      `{"result":"success","base_code":"USD","rates":{"EUR":"not-a-number"}}`.
+
+    TRY.
+        parse_json( json_body = json target_currency = 'EUR' ).
+        cl_abap_unit_assert=>fail(
+          msg = 'Expected zcx_scm_api_error for non-numeric rate value' ).
+      CATCH zcx_scm_api_error INTO DATA(api_error).
+        cl_abap_unit_assert=>assert_not_initial(
+          act = api_error->error_message
+          msg = 'Error message must not be empty' ).
+    ENDTRY.
 
   ENDMETHOD.
 
@@ -168,7 +184,7 @@ CLASS ltc_exch_rate_api  IMPLEMENTATION.
   "──────────────────────────────────────────────────────────────────────────
   " Currency not in the rates object → zcx_scm_api_error
   "──────────────────────────────────────────────────────────────────────────
-   METHOD unknown_currency_raises.
+  METHOD unknown_currency_raises.
 
     CONSTANTS json TYPE string VALUE
       `{"result":"success","base_code":"USD","rates":{"EUR":0.91,"GBP":0.79}}`.

@@ -6,6 +6,11 @@ Built entirely with **RAP (RESTful ABAP Programming Model)** on managed scenario
 
 ---
 
+## 🚀 Live Demo
+You can view the deployment live here: [Explore the App](https://a396c05d-a792-494b-a9f2-5b3f674def78.abap-web.ap21.hana.ondemand.com/sap/bc/ui5_ui5/sap/zscmproc)
+
+---
+
 ## Table of Contents
 
 - [What This Project Does](#what-this-project-does)

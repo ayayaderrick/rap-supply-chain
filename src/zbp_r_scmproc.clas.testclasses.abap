@@ -238,6 +238,12 @@ CLASS ltc_procurement IMPLEMENTATION.
       FAILED   DATA(failed_save)
       REPORTED DATA(reported_save).
 
+    " Satisfy SLIN and assert that the save failed (sy-subrc = 4)
+    cl_abap_unit_assert=>assert_equals(
+        msg =  'Commit should have failed due to zero unit price'
+        exp = 4
+        act = sy-subrc ).
+
     cl_abap_unit_assert=>assert_not_initial(
       act = failed_save-Procurement
       msg = 'Validation must reject zero unit price' ).
@@ -266,6 +272,11 @@ CLASS ltc_procurement IMPLEMENTATION.
       FAILED   DATA(failed_save)
       REPORTED DATA(reported_save).
 
+    cl_abap_unit_assert=>assert_equals(
+        act = sy-subrc
+        exp = 4
+        msg = 'Commit should have failed due to same currencies' ).
+
     cl_abap_unit_assert=>assert_not_initial(
       act = failed_save-Procurement
       msg = 'Validation must reject identical source and preferred currency' ).
@@ -292,6 +303,12 @@ CLASS ltc_procurement IMPLEMENTATION.
       RESPONSE OF zr_scmproc
       FAILED   DATA(failed_save)
       REPORTED DATA(reported_save).
+
+    cl_abap_unit_assert=>assert_equals(
+        act = sy-subrc
+        exp = 4
+        msg = 'Commit should have failed due to zero quantity'
+     ).
 
     cl_abap_unit_assert=>assert_not_initial(
       act = failed_save-Procurement

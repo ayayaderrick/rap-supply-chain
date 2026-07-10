@@ -1,0 +1,34 @@
+{
+  "formatVersion": "2",
+  "header": {
+    "description": "An SAP Fiori RAP application.",
+    "originalLanguage": "en",
+    "abapLanguageVersion": "cloudDevelopment"
+  },
+  "generalInformation": {
+    "appType": "ui5",
+    "catalogId": "SAP_TC_UI5_REPO_UIAD",
+    "targetMappingTitle": "Supply Chain App"
+  },
+  "ui5AppDetails": {
+    "appId": "zscmproc"
+  },
+  "navigation": {
+    "targetMappingId": "ZSCMPROC_UI5R_TM",
+    "semanticObject": "ZSCM_PROCUREMENT",
+    "action": "display",
+    "desktop": true,
+    "tablet": true,
+    "phone": true
+  },
+  "tiles": [
+    {
+      "id": "ZSCMPROC_UI5R_AL",
+      "tileType": "static",
+      "isDefault": true,
+      "standard": {
+        "title": "Supply Chain App"
+      }
+    }
+  ]
+}

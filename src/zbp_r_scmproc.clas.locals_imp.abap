@@ -163,8 +163,8 @@ CLASS lhc_zr_scmproc IMPLEMENTATION.
             %tky = <procurement>-%tky
             ExchangeRate = lv_exchange_rate
             TotalInPreferredCcy = CONV #( lv_total )
-            ApiMessage = |Rate: 1 { <procurement>-SourceCurrency } = { lv_exchange_rate }|
-                                  & |{ <procurement>-PreferredCurrency } (live from  open.er-api.com)|
+            ApiMessage = 'Rate: 1'(010) && |{ <procurement>-SourceCurrency } = { lv_exchange_rate }|
+                                  & |{ <procurement>-PreferredCurrency }| && '(live from  open.er-api.com)'(011)
            ) TO lt_updates.
         CATCH zcx_scm_api_error INTO DATA(api_error).
           " Write the error into ApiMessage so the UI can display it.
@@ -227,10 +227,10 @@ CLASS lhc_zr_scmproc IMPLEMENTATION.
         APPEND VALUE #( %tky = ls_procurement-%tky ) TO failed-procurement.
         APPEND VALUE #(
             %tky = ls_procurement-%tky
-            %msg = new_message_with_text(
-                severity = if_abap_behv_message=>severity-error
-                text = 'Source currency must not be empty.'
-             )
+            %msg = new_message(
+            id = 'ZSCM_MSG_CLASS'
+            number = '001'
+            severity = if_abap_behv_message=>severity-error )
             %element-SourceCurrency = if_abap_behv=>mk-on
             %state_area = 'VALIDATE_CURRENCIES'
          ) TO reported-procurement.
@@ -241,10 +241,10 @@ CLASS lhc_zr_scmproc IMPLEMENTATION.
         APPEND VALUE #( %tky = ls_procurement-%tky ) TO failed-procurement.
         APPEND VALUE #(
             %tky = ls_procurement-%tky
-            %msg = new_message_with_text(
-                severity = if_abap_behv_message=>severity-error
-                text = 'Preferred currency must not be empty.'
-             )
+            %msg = new_message(
+            id = 'ZSCM_MSG_CLASS'
+            number = '002'
+            severity = if_abap_behv_message=>severity-error )
             %element-PreferredCurrency = if_abap_behv=>mk-on
             %state_area = 'VALIDATE_CURRENCIES'
          ) TO reported-procurement.
@@ -255,9 +255,10 @@ CLASS lhc_zr_scmproc IMPLEMENTATION.
         APPEND VALUE #( %tky = ls_procurement-%tky ) TO failed-procurement.
         APPEND VALUE #(
             %tky = ls_procurement-%tky
-            %msg = new_message_with_text(
+            %msg = new_message(
+                id = 'ZSCM_MSG_CLASS'
+                number = '003'
                 severity = if_abap_behv_message=>severity-error
-                text = |Source and preferred currency cannot be the same. Choose a different target currency|
              )
             %element-SourceCurrency = if_abap_behv=>mk-on
             %element-PreferredCurrency = if_abap_behv=>mk-on
@@ -293,9 +294,10 @@ CLASS lhc_zr_scmproc IMPLEMENTATION.
         APPEND VALUE #( %tky = ls_procurement-%tky ) TO failed-procurement.
         APPEND VALUE #(
             %tky = ls_procurement-%tky
-            %msg = new_message_with_text(
+            %msg = new_message(
+                id = 'ZSCM_MSG_CLASS'
+                number = '004'
                 severity = if_abap_behv_message=>severity-error
-                text = 'Quantity must be greater than zero.'
              )
             %element-Quantity = if_abap_behv=>mk-on
             %state_area = 'VALIDATE_QTY_PRICE'
@@ -306,9 +308,10 @@ CLASS lhc_zr_scmproc IMPLEMENTATION.
         APPEND VALUE #( %tky = ls_procurement-%tky ) TO failed-procurement.
         APPEND VALUE #(
             %tky = ls_procurement-%tky
-            %msg = new_message_with_text(
+            %msg = new_message(
+                id = 'ZSCM_MSG_CLASS'
+                number = '005'
                 severity = if_abap_behv_message=>severity-error
-                text = 'Unit price must be greater than zero.'
              )
             %element-UnitPrice = if_abap_behv=>mk-on
             %state_area = 'VALIDATE_QTY_PRICE'
@@ -343,9 +346,10 @@ CLASS lhc_zr_scmproc IMPLEMENTATION.
         APPEND VALUE #( %tky = ls_procurement-%tky ) TO failed-procurement.
         APPEND VALUE #(
             %tky = ls_procurement-%tky
-            %msg = new_message_with_text(
+            %msg = new_message(
+                id = 'ZSCM_MSG_CLASS'
+                number = '006'
                 severity = if_abap_behv_message=>severity-error
-                text = 'Cannot refresh rate: source and preferred currency must be filled first.'
              )
          ) TO reported-procurement.
         CONTINUE.
@@ -419,8 +423,8 @@ CLASS lhc_zr_scmproc IMPLEMENTATION.
        ExchangeRate = rounded_rate
        TotalInPreferredCcy = CONV #( lv_total )
        RateFetchTimestamp = tsl
-       ApiMessage = |Rate Fetched: 1 { procurement-SourceCurrency } = { rounded_rate }|
-                                 & |{ procurement-PreferredCurrency } (live from  open.er-api.com)|
+       ApiMessage = 'Rate Fetched: 1'(008) && |{ procurement-SourceCurrency } = { rounded_rate }|
+                                 & |{ procurement-PreferredCurrency }| && '(live from  open.er-api.com)'(009)
      ).
 
   ENDMETHOD.
@@ -448,11 +452,10 @@ CLASS lhc_zr_scmproc IMPLEMENTATION.
         APPEND VALUE #( %tky = ls_procurement-%tky ) TO failed-procurement.
         APPEND VALUE #(
             %tky = ls_procurement-%tky
-            %msg = new_message_with_text(
+            %msg = new_message(
+                id = 'ZSCM_MSG_CLASS'
+                number = '007'
                 severity = if_abap_behv_message=>severity-error
-                text = 'Cannot approve: no exchange rate has been fetched. '
-                        && 'Enter source and preferred currency and wait for the '
-                        && 'rate to appear, or click Refresh Rate.'
              )
          ) TO reported-procurement.
         CONTINUE.

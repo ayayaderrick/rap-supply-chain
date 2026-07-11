@@ -21,7 +21,7 @@ You can view the deployment live here: [Explore the App](https://a396c05d-a792-4
 - [Running the Application Safely](#running-the-application-safely)
 - [Key Features](#key-features)
 - [Unit Testing](#unit-testing)
-- [Known Issues & Fixes Applied](#known-issues--fixes-applied)
+- [Code Quality & ATC Compliance](#code-quality--atc-compliance)
 - [Coding Standards](#coding-standards)
 - [Project Structure](#project-structure)
 
@@ -142,6 +142,28 @@ To run the tests in ADT:
 
 ---
 
+## Code Quality & ATC Compliance
+ 
+The full project has been run through the **ABAP Test Cockpit (ATC)** using the Clean ABAP / Cloud-readiness check variant to validate that every artifact is release-eligible for the ABAP Cloud programming model.
+ 
+Key remediation carried out as a result of the ATC findings:
+ 
+- **Hardcoded strings eliminated.** All literal messages and labels previously embedded directly in ABAP statements (e.g. exception text, log messages, action feedback) have been replaced with:
+  - **Text symbols** for UI-facing and log-facing static text, and
+  - **Message classes** for structured, translatable messages raised from validations, determinations, and the `RefreshRate` action.
+- **No magic literals remain** in conditionals or comparisons — all thresholds and fixed values are now named constants, per Clean ABAP guidance.
+- **Translatability.** Since all user-facing text now resolves through text symbols and message classes rather than inline literals, the application is ready for translation without further code changes.
+- **Cloud-readiness confirmed.** ATC reported no remaining findings against released, non-Cloud-compatible statements — the project uses exclusively C1-released APIs.
+To re-run the check yourself in ADT:
+ 
+1. Right-click the package (`ZSCM_PROCUREMENT`) in the Project Explorer.
+2. Select **ATC → Run as → ABAP Test Cockpit With...**
+3. Choose the Clean ABAP / Cloud-readiness check variant assigned to your system.
+4. Review findings in the ATC Problems view before releasing any transport.
+> **Tip:** Run ATC as part of your pre-transport checklist alongside the ABAP Unit test suite — a clean ATC run and a green unit test run are both required before a transport is released.
+
+---
+
 ## Coding Standards
 
 This project strictly enforces:
@@ -180,8 +202,7 @@ procurement-portal/
 │   ├── behavior class
 │   └── testclasses.abap   ← local unit test class
 ├── service/
-│   ├── service definition
-│   └── service binding
-└── demo/
-    └── demo data provider class
+    ├── service definition
+    └── service binding
+
 ```
